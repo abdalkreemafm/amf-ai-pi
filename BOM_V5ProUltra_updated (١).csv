@@ -1,0 +1,141 @@
+Designator,Part Number,Value,Description,Package,Quantity,LCSC Part,Alternative,Notes,Status
+U1,AD8429BRZ,Instrumentation Amp,Low-noise IA 1nV/rtHz for RX1,SOIC-8,1,C9561,INA128/AD620,First stage gain=7255 with RG=6.81Ω,Original
+U2,AD797BRZ,Low-Noise Op-Amp,Post-amp stage for RX1,SOIC-8,1,C7433,NE5534,Gain=11 second stage,Original
+U3,AD8429BRZ,Instrumentation Amp,RX2,SOIC-8,1,C9561,INA128,Same as U1,Original
+U4,AD797BRZ,Low-Noise Op-Amp,RX2 post-amp,SOIC-8,1,C7433,NE5534,Same as U2,Original
+U5,AD8429BRZ,Instrumentation Amp,RX3,SOIC-8,1,C9561,INA128,,Original
+U6,AD797BRZ,Low-Noise Op-Amp,RX3 post-amp,SOIC-8,1,C7433,NE5534,,Original
+U7,PGA281AIDR,Programmable Gain Amp,Replaces wrong PGA855,TSSOP-16,1,C693247,4x AD8253,CORRECTED from PGA855DSR,Corrected
+U8,ADS1256IDBR,24-bit ADC,Main ADC 30kSPS,SSOP-28,1,C37797,None,Critical - no substitute,Original
+U9,STM32H743VIT6,ARM Cortex-M7 MCU,Main processor 480MHz,LQFP-100,1,C126830,STM32H750,Needs Y1 Y2 BOOT0 pull-down,Original
+U10,K210 Sipeed M1n,AI Vision Processor,RISC-V dual-core + KPU,Module,1,C2879620,None,Needs 1.8V + 0.9V LDO,Original
+U11,REF5025AIDGK,Voltage Reference 2.5V,0.05% precision ref,MSOP-8,1,C62063,TL431+0.1% R,Critical for ADC accuracy,Original
+U12,TC4420CPA,MOSFET Driver 6A,Gate driver for TX coil,DIP-8,1,C158775,IR4427,,Original
+U13,MPU9250,9-Axis IMU,Accel+Gyro+Mag,QFN-24,1,C50481,ICM-20948,I2C addr 0x68,Original
+U14,OV5640,5MP Camera Module,CMOS sensor with DVP,Module,1,C4022491,OV2640,Needs 24MHz OSC and 2.8V LDO,Original
+U15,MP1584EN,Buck Converter 3A,5V output 100x60mm friendly,SOIC-8,1,C89358,LM2596S,REPLACES LM2596 (too big),Corrected
+U16,MP1584EN,Buck Converter 3A,3.3V output,SOIC-8,1,C89358,AMS1117-3.3,Lower heat vs LDO,Original
+U17,HC-05,Bluetooth Classic Module,SPP for mobile app,Module,1,C90617,JDY-31/ESP32,5V supply with level shift,Original
+U18,SSD1306,OLED Driver 128x64,1.3 inch display I2C,Module,1,C2890,SH1106,Address 0x3C,Original
+U19,USBLC6-2SC6,USB ESD Protection,TVS array 5V,SOT-23-6,1,C7519,,Original protection,Original
+U20,B0505S-1W,Isolated DC-DC 5V/5V,Isolation for gate driver,DIP-4,1,C7465,,Reduces ESP32 noise 90%,Original
+U21,RT9013-18GB,LDO 1.8V 500mA,K210 core rail,SOT-23-5,1,C47773,XC6206P182MR,ADDED - K210 1.8V rail,NEW
+U22,RT9013-09GB,LDO 0.9V 500mA,K210 IO rail,SOT-23-5,1,C47772,None,ADDED - K210 0.9V rail,NEW
+U23,RT9013-28GB,LDO 2.8V 500mA,Camera rail,SOT-23-5,1,C47775,,ADDED - OV5640 AVDD,NEW
+OSC1,SG8002CA-24MHz,Crystal Oscillator,Active 24MHz for camera,SMD-3225,1,C80779,,ADDED - OV5640 clock,NEW
+Y1,X322525MSB4SI,Crystal 25MHz 8pF,HSE for STM32H7,SMD-3225,1,C115962,,ADDED - STM32 main clock,NEW
+Y2,ABS07-32.768KHZ,Crystal 32.768kHz 6pF,LSE for RTC,SMD-3215,1,C32346,,ADDED - STM32 RTC,NEW
+Q1,IRF740,MOSFET N-Ch 400V 10A,TX coil switch,TO-220,1,C163387,IRF840/12N65,,Original
+Q2,IRF740,MOSFET N-Ch 400V 10A,Damping switch,TO-220,1,C163387,IRF840,,Original
+Q3,AO3400,MOSFET N-Ch 30V 5.7A,LED 3W driver,SOT-23,1,C20917,2N7002,ADDED - LED current control,NEW
+Q4,2N2222,NPN BJT,Buzzer driver,SOT-23,1,C8544,MMBT2222A,,Original
+J1,GX12-12P,Aviation Connector Female,Coil interface panel mount,Through-hole,1,C2896313,2x GX12-6P,Main coil connector,Original
+J2,2.54mm 1x4 Header,SWD Programming Header,For STM32 flashing,Through-hole,1,C124377,,ADDED - mandatory for flashing,NEW
+J3,TYPE-C-31-M-12,USB-C 16P Female,Charging + USB serial,SMD,1,C165948,,ADDED - USB-C port,NEW
+J4,DC Jack 5.5x2.1,Power input,Battery charger,Through-hole,1,C319442,,,Original
+J5,XH2.54-2P,Battery connector,3S pack,Through-hole,1,C158012,,,Original
+J6,Micro-SD Slot,SD Card Holder,SPI data logging,SMD,1,C91145,,,Original
+BT1,LiFePO4 3S 12.8V,Battery Pack,Main power,External,1,,,11.1V 3S Li-ion OK,Original
+F1,Fuse 2A 1812 Slow,Resettable Fuse,Main input protection,1812,1,C914618,2A Fuse Holder,CORRECTED from 1206,Corrected
+F2,Fuse 3A 1812 Slow,DC Jack protection,,1812,1,C914620,,,Original
+D1,SS34,Schottky Diode 3A 40V,DC Jack reverse polarity,SMA,1,C8619,1N5822,,Original
+D2,SMAJ5.0CA,TVS Bidir 5V,RX1+ protection,SMC,1,C12835,,,Original
+D3,SMAJ5.0CA,TVS Bidir 5V,RX1- protection,SMC,1,C12835,,,Original
+D4,SMAJ5.0CA,TVS Bidir 5V,RX2+ protection,SMC,1,C12835,,,Original
+D5,SMAJ5.0CA,TVS Bidir 5V,RX2- protection,SMC,1,C12835,,,Original
+D6,SMAJ12CA,TVS Bidir 12V,TX coil spike clamp +,SMC,1,C12823,,ADDED - Critical 300V spike,NEW
+D7,SMAJ12CA,TVS Bidir 12V,TX coil spike clamp -,SMC,1,C12823,,ADDED - Critical 300V spike,NEW
+D8,SMAJ5.0CA,TVS Bidir 5V,RX3+ protection,SMC,1,C12835,,,Original
+D9,SMAJ5.0CA,TVS Bidir 5V,RX3- protection,SMC,1,C12835,,,Original
+D10,SMAJ5.0CA,TVS Bidir 5V,RX4+ protection,SMC,1,C12835,,,Original
+D11,SMAJ5.0CA,TVS Bidir 5V,RX4- protection,SMC,1,C12835,,,Original
+L1,10uH 3A SMD,Power Inductor,Buck output U15,SMD-1210,1,C1046,,,Original
+L2,10uH 3A SMD,Power Inductor,Buck output U16,SMD-1210,1,C1046,,,Original
+L3,BLM18AG601SN1D,Ferrite Bead 600Ω@100MHz,AVDD isolation,0603,1,C1017,,Previously unvalued,Clarified
+L4,BLM18AG601SN1D,Ferrite Bead 600Ω@100MHz,VDDA STM32 isolation,0603,1,C1017,,,Original
+L5,BLM18AG601SN1D,Ferrite Bead 600Ω@100MHz,Charger noise filter,0603,1,C1017,,,Original
+RG1,6.81R 0.1% 0603,Precision Resistor,AD8429 U1 gain set,0603,1,C276484,,ADDED - sets gain=7255,NEW
+RG2,6.81R 0.1% 0603,Precision Resistor,AD8429 U3 gain set,0603,1,C276484,,ADDED - sets gain=7255,NEW
+RG3,6.81R 0.1% 0603,Precision Resistor,AD8429 U5 gain set,0603,1,C276484,,ADDED - sets gain=7255,NEW
+R1,2R 3W Wirewound,Damping Resistor,TX coil damping,Axial/2512,1,C17906,2x 1R 2W parallel,Gets hot,Original
+R2,0.1R 1% 3W,Current Sense,TX current monitor,2512,1,C14225,,,Original
+R3,100R 1% 0603,Series Resistor,AD8429 RX1+ input,0603,1,C22775,,,Original
+R4,100R 1% 0603,Series Resistor,AD8429 RX1- input,0603,1,C22775,,,Original
+R5,100R 1% 0603,Series Resistor,AD8429 RX2+,0603,1,C22775,,,Original
+R6,100R 1% 0603,Series Resistor,AD8429 RX2-,0603,1,C22775,,,Original
+R7,100R 1% 0603,Series Resistor,AD8429 RX3+,0603,1,C22775,,,Original
+R8,100R 1% 0603,Series Resistor,AD8429 RX3-,0603,1,C22775,,,Original
+R9,100R 1% 0603,Series Resistor,AD8429 RX4+,0603,1,C22775,,,Original
+R10,100R 1% 0603,Series Resistor,AD8429 RX4-,0603,1,C22775,,,Original
+R11,10k 1% 0603,Feedback R,AD797 feedback,0603,4,C25804,,Qty 4 for 4 channels,Original
+R12,1k 1% 0603,Feedback R,AD797 gain set,0603,4,C21190,,,Original
+R13,49.9R 1% 0603,Series R,Anti-alias filter,0603,1,C23186,,,Original
+R14,1k 1% 0603,Series R,HC-05 level shift,0603,1,C21190,,,Original
+R15,10k 1% 0603,Pull-up,HC-05 EN line,0603,1,C25804,,,Original
+R16,100R 1% 0603,Series R,Buzzer base,0603,1,C22775,,,Original
+R17,10k 1% 0603,Pull-up,STM32 NRST,0603,1,C25804,,,Original
+R18,1M 1% 0603,Bleed Resistor,Chassis GND,0603,1,C22935,,,Original
+R19,100R 1% 0603,Series R,TX gate,0603,1,C22775,,,Original
+R20,1k 1% 0603,Base Resistor,TC4420 input,0603,1,C21190,,,Original
+R39,22R 1% 0603,USB D+ Series,USB signal integrity,0603,1,C22962,,ADDED - USB-C,NEW
+R40,22R 1% 0603,USB D- Series,USB signal integrity,0603,1,C22962,,ADDED - USB-C,NEW
+R41,10k 1% 0603,BOOT0 Pull-down,STM32 boot mode,0603,1,C25804,,ADDED - prevents boot hang,NEW
+R42,4.7k 1% 0603,I2C Pull-up SCL,OLED + MPU9250,0603,1,C23162,,ADDED - I2C stability,NEW
+R43,4.7k 1% 0603,I2C Pull-up SDA,OLED + MPU9250,0603,1,C23162,,ADDED - I2C stability,NEW
+R44,10k 1% 0603,Switch Pull-up,SW1 MENU,0603,1,C25804,,Or use internal STM32 pull-up,Optional
+R45,10k 1% 0603,Switch Pull-up,SW2 UP,0603,1,C25804,,Or internal,Optional
+R46,10k 1% 0603,Switch Pull-up,SW3 DOWN,0603,1,C25804,,Or internal,Optional
+R47,10k 1% 0603,Switch Pull-up,SW4 SELECT,0603,1,C25804,,Or internal,Optional
+R48,1R 1W 1206,LED Current Limit,Works with Q3,1206,1,C25794,,ADDED - LED3W current,NEW
+R49,10k 1% 0603,K210 UART pull,Signal ready,0603,1,C25804,,,Original
+R50,100k 1% 0603,ADC Divider,Battery monitor,0603,1,C22843,,,Original
+R51,33k 1% 0603,ADC Divider,Battery monitor,0603,1,C22974,,,Original
+C1,100uF 25V Low-ESR,Bulk Cap AFE,Electrolytic/Polymer,SMD-D8,1,C16133,2x 100uF parallel,Reduced from 4x 470uF,Corrected
+C2,100uF 25V Low-ESR,Bulk Cap AFE,,SMD-D8,1,C16133,,Reduced count,Corrected
+C3,22uF 10V X7R,Buck Output,MP1584 output,1210,2,C15850,,,Original
+C4,10uF 10V X7R,Bulk Cap,3.3V rail,0805,4,C19702,,,Original
+C5,100uF 16V Low-ESR,Bulk Cap,+5V rail,SMD-D6,1,C16133,,,Original
+C6,1uF 10V X7R,Decoupling,REF5025 out,0603,1,C15849,,,Original
+C7,100pF NP0 1%,Compensation,AD8429 stability,0603,8,C1634,,8 pcs for 4 channels,Original
+C8,1nF NP0,Anti-Alias,Before ADS1256,0603,1,C1639,,,Original
+C9,22pF NP0,Crystal Load,Y1 25MHz,0603,2,C1653,,ADDED - Y1 load caps,NEW
+C10,10pF NP0,Crystal Load,Y2 32kHz,0603,2,C32949,,ADDED - Y2 load caps,NEW
+C11,4.7uF X7R,Decoupling,LDO output,0603,3,C19666,,For U21 U22 U23,NEW
+C12-C40,100nF X7R,Decoupling,IC bypass,0603,25,C14663,,One per power pin,Original
+TP1,Test Point Pad,TP +12V_RAW,At F1,SMD 1mm,1,,,,Recommended
+TP2,Test Point Pad,TP +5V,U15 out,SMD 1mm,1,,,,Recommended
+TP3,Test Point Pad,TP +3.3V,U16 out,SMD 1mm,1,,,,Recommended
+TP4,Test Point Pad,TP +3.3V_ANA,After L3,SMD 1mm,1,,,,Recommended
+TP5,Test Point Pad,TP +2.5V_REF,U11 out,SMD 1mm,1,,,,Recommended
+TP6,Test Point Pad,TP VDDA,U8 pin1,SMD 1mm,1,,,,Recommended
+TP7,Test Point Pad,TP AGND-DGND,Star point,SMD 1mm,1,,,,Recommended
+TP8-TP10,Test Point Pad,AC test points,Various,SMD 1mm,3,,,Scope probes,Recommended
+U30,OPA2134UA,Dual Audio Op-Amp,Wien Bridge Oscillator for EC,SOIC-8,1,C36878,OPA1642,ADDED v2 - EC AC excitation,NEW
+U31,INA128U,Instrumentation Amp,EC differential sense,SOIC-8,1,C37455,AD620,ADDED v2 - EC sense,NEW
+U32,AD8542ARZ,Rail-to-Rail Op-Amp,Precision rectifier for EC,SOIC-8,1,C39663,MCP6022,ADDED v2 - EC RMS,NEW
+U33,24LC256-I/SN,EEPROM 32KB I2C,Calibration storage,SOIC-8,1,C7247,AT24C256,ADDED v2 - cal memory,NEW
+U34,INA219AIDCNR,Current/Power Monitor,Battery current sense,SOT23-8,1,C138683,INA226,ADDED v2 - battery monitor,NEW
+R_EC_A,1.6k 1% 0603,Wien freq. resistor,Sets 1kHz oscillation,0603,1,C22819,,ADDED v2,NEW
+R_EC_B,1.6k 1% 0603,Wien freq. resistor,Sets 1kHz oscillation,0603,1,C22819,,ADDED v2,NEW
+C_EC_A,100nF NP0 0603,Wien capacitor,Oscillator timing,0603,1,C14663,,ADDED v2,NEW
+C_EC_B,100nF NP0 0603,Wien capacitor,Oscillator timing,0603,1,C14663,,ADDED v2,NEW
+R_SENSE,100R 0.1% 0603,EC current sense,Precision reading,0603,1,C96348,,ADDED v2,NEW
+R_AGC,PTC 100R 0603,AGC element,Wien amplitude stability,0603,1,C135140,,ADDED v2,NEW
+K1,CPC1017N,SSR 1-Form-A,EC isolation relay,DIP-4,1,C133111,AQY210EH,ADDED v2 - DC decouple,NEW
+R_SHUNT,0.01R 1% 1W 2512,Shunt resistor,Battery current path,2512,1,C13836,,ADDED v2,NEW
+BT2,CR1220 Holder,Coin cell holder,RTC backup battery,SMD,1,C70378,,ADDED v2 - RTC backup,NEW
+D_BK1,BAT54S,Dual Schottky,RTC backup diode,SOT-23,1,C7465,,ADDED v2,NEW
+D_BK2,BAT54S,Dual Schottky,RTC backup diode,SOT-23,1,C7465,,ADDED v2,NEW
+F_HOLDER,Littelfuse 0454,Fuse holder 5x20mm,Replaces F1 SMD,Through-Hole,1,C914618,,CORRECTED v2 - replaceable,Corrected
+F1_NEW,Fuse 2A Slow 5x20,Glass fuse,Main input protection,Through-Hole,1,C725922,,Updated to match holder,Corrected
+TP1,Keystone 5000,Test Point Loop,+12V_RAW,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP2,Keystone 5000,Test Point Loop,+5V,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP3,Keystone 5000,Test Point Loop,+3.3V,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP4,Keystone 5001 Red,Test Point Loop,+3.3V_ANA,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP5,Keystone 5002 Yellow,Test Point Loop,+2.5V_REF (critical),SMD 1mm,1,C506203,,ADDED v2,NEW
+TP6,Keystone 5001 Red,Test Point Loop,VDDA,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP7,Keystone 5011 Black,Test Point Loop,AGND Star,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP8,Keystone 5011 Black,Test Point Loop,DGND Star,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP9,Keystone 5000,Test Point Loop,TX_DRIVE,SMD 1mm,1,C506203,,ADDED v2,NEW
+TP10,Keystone 5000,Test Point Loop,ADS_DRDY,SMD 1mm,1,C506203,,ADDED v2,NEW
+THERMAL_PAD_K210,Silicone Thermal Pad 1mm 15x15mm,Heat interface,K210 to enclosure,Pad,1,C2861305,,ADDED v2,NEW

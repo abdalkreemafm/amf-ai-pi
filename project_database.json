@@ -1,0 +1,298 @@
+{
+  "meta": {
+    "project_name": "Gradiometer & Soil Analysis System",
+    "version": "1.0.0",
+    "date_generated": "2026-04-29",
+    "notes": [
+      "Data extracted from a 16,821-line WhatsApp chat log.",
+      "The system focuses on a high-precision gradiometer using RM3100 and a soil analysis unit with STM32H7 and K210.",
+      "Hardware details include specific part numbers, gain calculations, and power tree components.",
+      "Firmware logic covers ESP32-S3 and STM32H7 with signal processing (FFT mentioned in requirements but details are implicit in sensor sampling).",
+      "Decision log captures technical pivots regarding sensor selection and PCB design tools."
+    ]
+  },
+  "Hardware_Analog": {
+    "afe_rx1": {
+      "components": [
+        {
+          "designator": "U1",
+          "part_number": "AD8429BRZ",
+          "package": "SOIC-8",
+          "function": "Instrumentation Amplifier (First Stage)",
+          "details": {
+            "RG": "6.81 Ohm (0.1% precision)",
+            "Gain": "1 + (49.4k / 6.81) ≈ 7255 (approx 77dB)",
+            "Power": "+/- 5V Analog",
+            "Pins": {
+              "1, 8": "RG",
+              "2": "IN- (RX1-)",
+              "3": "IN+ (RX1+)",
+              "4": "-Vs (-5V)",
+              "7": "+Vs (+5V)",
+              "6": "Output to Stage 2"
+            }
+          }
+        },
+        {
+          "designator": "U2",
+          "part_number": "AD797BRZ",
+          "package": "SOIC-8",
+          "function": "Low Noise Op-Amp (Second Stage)",
+          "details": {
+            "Gain": "1 + (10k / 1k) = 11",
+            "Total_System_Gain": "Target 10,000",
+            "Power": "+/- 5V Analog"
+          }
+        }
+      ],
+      "filters": {
+        "type": "Sallen-Key (implied)",
+        "frequency_range": "100Hz to 50kHz (suggested for analysis)"
+      },
+      "protection": [
+        {
+          "component": "USBLC6-2",
+          "package": "SOT-23-6",
+          "function": "USB ESD Protection"
+        },
+        {
+          "component": "SMAJ12CA",
+          "package": "SMC",
+          "function": "TVS for GX12-12P coil spike protection"
+        }
+      ]
+    },
+    "components": [
+      {
+        "designator": "U1_Main",
+        "value": "STM32H743VIT6",
+        "package": "LQFP-144",
+        "function": "Main MCU",
+        "alt_part": "None"
+      },
+      {
+        "designator": "U2_Vision",
+        "value": "K210 Sipeed M1n",
+        "package": "Module",
+        "function": "AI Vision Processor"
+      },
+      {
+        "designator": "Sensors_Mag",
+        "value": "RM3100 (PNI)",
+        "package": "Module/IC",
+        "function": "3-Axis Magnetometer (13nT resolution)",
+        "details": "Includes 13156 (Controller), 13101 (X), 13104 (Y/Z)"
+      },
+      {
+        "designator": "U13",
+        "value": "MPU9250",
+        "package": "QFN-24",
+        "function": "9-Axis IMU"
+      },
+      {
+        "designator": "U11",
+        "value": "ADS1256IDB",
+        "package": "SSOP-28",
+        "function": "24-bit ADC"
+      },
+      {
+        "designator": "Q1, Q2",
+        "value": "IRF740",
+        "package": "TO-220",
+        "function": "MOSFET for excitation coil"
+      }
+    ],
+    "power_tree": {
+      "battery": "3S Li-ion (11.1V) or 3S LiFePO4",
+      "regulators": [
+        {
+          "part": "LM2596S-5.0",
+          "output": "5V",
+          "note": "Suggested to replace with MP1584 for size"
+        },
+        {
+          "part": "AMS1117-3.3",
+          "output": "3.3V"
+        },
+        {
+          "part": "B0505S-1W",
+          "function": "Isolated DC-DC for gate driver"
+        },
+        {
+          "part": "RT9013-18/09",
+          "output": "1.8V / 0.9V for K210"
+        }
+      ]
+    },
+    "connectors": [
+      {
+        "type": "GX12-12P",
+        "function": "Main External Interface"
+      },
+      {
+        "type": "USB-C",
+        "function": "Charging and Programming"
+      },
+      {
+        "type": "Micro SD Slot",
+        "interface": "SPI"
+      }
+    ],
+    "pcb_layout": {
+      "dimensions": "30x30mm (Target for AFE board)",
+      "layers": "2 or 4 (4 recommended for H7/K210)",
+      "software_decisions": [
+        "KiCad 7.0 used for schematic/PCB",
+        "Quilter/Flux.ai attempted for auto-routing"
+      ]
+    }
+  },
+  "Firmware_Embedded": {
+    "mcu": {
+      "primary": "STM32H743VIT6",
+      "secondary": "ESP32-S3 N16R8 (16MB Flash, 8MB PSRAM)",
+      "alternatives": [
+        {
+          "part": "ESP32 DevKit V1",
+          "reason": "Lower cost, legacy projects"
+        }
+      ]
+    },
+    "modules": [
+      "main.c",
+      "afe_handler.h",
+      "rm3100_driver.c",
+      "sd_logger.c",
+      "gui_oled.c"
+    ],
+    "signal_processing": {
+      "algorithms": [
+        "Cycle Count Mode for RM3100",
+        "Differential Gradiometry (Sensor 1 - Sensor 2)",
+        "FFT (mentioned for signal analysis)",
+        "Excitation Pulse Timing (5ms pulse at 20Hz)"
+      ],
+      "filters": "Digital Low Pass for magnetometer data"
+    },
+    "variables": [
+      {
+        "name": "WHO_AM_I",
+        "type": "uint8_t",
+        "value": "0x0F (RM3100 ID Register)"
+      },
+      {
+        "name": "I2C_ADDR_RM3100",
+        "type": "uint8_t",
+        "value": "0x20"
+      },
+      {
+        "name": "Excitation_Duty",
+        "type": "int",
+        "value": "20%"
+      }
+    ],
+    "tasks_ISRs": [
+      "DRDY (Data Ready) ISR for RM3100",
+      "Timer Interrupt for Excitation Pulse",
+      "SD Write Task (Buffer 50 readings before write)"
+    ],
+    "protocols": {
+      "SPI": "Micro SD Card, RM3100 (Optional)",
+      "I2C": "OLED, MPU9250, RM3100 (Primary), ADS1256",
+      "UART": "K210 Communication",
+      "BLE": "ESP32 Mobile App Link"
+    }
+  },
+  "Android_App": {
+    "screens": [
+      "Main Dashboard",
+      "3D Visualization View",
+      "Calibration Settings",
+      "Data Logging Management"
+    ],
+    "3d_views": {
+      "libraries": "OpenGL ES or Unity (implied for 3D rendering)",
+      "features": "Real-time magnetic field mapping",
+      "algorithms": "Interpolation for heatmaps"
+    },
+    "data_flow": {
+      "connection": "BLE (Bluetooth Low Energy)",
+      "packet_format": "Binary frames with header, sensor data, and checksum",
+      "refresh_rate": "20Hz (aligned with sensor sampling)"
+    },
+    "features": [
+      "Real-time graph plotting",
+      "GPS Tagging for magnetic readings",
+      "CSV Export for GitHub/External analysis"
+    ],
+    "ui_components": [
+      "Compass overlay",
+      "Signal strength bar",
+      "Battery level indicator (via INA219 data)"
+    ]
+  },
+  "Decision_Log": [
+    {
+      "date": "2026-04-15",
+      "time": "06:26 AM",
+      "topic": "MCU Selection",
+      "problem": "Choosing between ESP32-S3 and DevKit V1",
+      "options_considered": [
+        "ESP32 DevKit V1 (Standard)",
+        "ESP32-S3 N16R8 (High RAM)"
+      ],
+      "decision": "ESP32-S3 N16R8",
+      "rationale": "Need for PSRAM for AI/Camera tasks and more GPIOs",
+      "changed_from": "DevKit V1",
+      "changed_to": "ESP32-S3",
+      "impact": "Higher performance, support for display/camera"
+    },
+    {
+      "date": "2026-04-15",
+      "time": "06:59 AM",
+      "topic": "Magnetometer Selection",
+      "problem": "Replacement for obsolete Magli2C sensor",
+      "options_considered": [
+        "HMC5883L",
+        "QMC5883L",
+        "RM3100"
+      ],
+      "decision": "RM3100 (PNI)",
+      "rationale": "High precision (13nT) and low noise required for gradiometry",
+      "changed_from": "Magli2C",
+      "changed_to": "RM3100",
+      "impact": "Significant accuracy improvement, requires specific driver"
+    },
+    {
+      "date": "2026-04-18",
+      "time": "01:47 AM",
+      "topic": "Power & Isolation",
+      "problem": "Noise from ESP32 affecting sensitive analog sensors",
+      "options_considered": [
+        "Common power rail",
+        "Isolated DC-DC + Separate Bucks"
+      ],
+      "decision": "Isolated DC-DC (B0505S) + Dual Buck Converters",
+      "rationale": "Reduces ESP32 noise by 90% and protects sensor integrity",
+      "changed_from": "Standard LDO",
+      "changed_to": "Isolated Power Tree",
+      "impact": "Cleaner signal, higher complexity"
+    },
+    {
+      "date": "2026-04-28",
+      "time": "05:03 PM",
+      "topic": "PCB Design Workflow",
+      "problem": "Quilter failing to parse KiCad PCB files",
+      "options_considered": [
+        "Manual routing in KiCad",
+        "Export to IPC-2581 (XML)",
+        "Switching to Flux.ai"
+      ],
+      "decision": "Export to IPC-2581 / Flux.ai",
+      "rationale": "Quilter had issues with manual file edits and Edge.Cuts layers",
+      "changed_from": "KiCad Native",
+      "changed_to": "IPC-2581 / Flux.ai",
+      "impact": "Successful parsing and routing progress"
+    }
+  ]
+}
