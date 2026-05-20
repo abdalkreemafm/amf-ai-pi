@@ -1,0 +1,736 @@
+{
+  "meta": {
+    "project_name": "Hadeed Platform",
+    "previous_codename": "V5-Pro Ultra / Gradiometer & Soil Analysis",
+    "version": "3.0",
+    "date": "2026-05-05",
+    "language": "Arabic + English",
+    "owner": "User (Anonymous)",
+    "engineer": "Manus AI (Tier-1 Hardware Consultant)",
+    "philosophy": "منصّة موحّدة، أربع تجهيزات، ترقية معيارية. نبيع حلولاً لمشاكل المنقّب لا ميزات تقنية.",
+    "total_documents": 14,
+    "documents_index": [
+      "project_database.json (الأصلي)",
+      "V5-Pro-Ultra-Structure.json",
+      "Project_Review_Final.md (v1)",
+      "BOM_V5ProUltra_updated.csv (BOM v2)",
+      "AFE_Prototype_NoiseFloor_Guide.md",
+      "BLE_Protocol_Spec_v1.md",
+      "Project_Review_Final_v2.md",
+      "Hardware_Finalization_v2.md",
+      "Architecture_Truth_And_Feature_Ranking.md",
+      "Engineering_Solutions_v2.md",
+      "Expert_Value_Engineering_Review.md",
+      "All_Ideas_Forensic_Extraction.md (160 فكرة)",
+      "Product_Lineup_V0_V1_V2_V3.md",
+      "Product_Lineup_ELITE_v2.md",
+      "User_Research_PainPoints.md (12 مشكلة)",
+      "Hadeed_UserCentered_Redesign.md",
+      "Hadeed_Modular_Killer_Features.md (11 مشكلة جديدة + 9 add-ons + 10 killer features)",
+      "Hadeed_Architecture_Roadmap_v3.md (الخارطة المعمارية الكاملة)"
+    ]
+  },
+
+  "platform_overview": {
+    "concept": "Modular Upgradeable Metal Detection Platform",
+    "shared_mainboard": "Hadeed-MB-001 (نفس PCB لكل النسخ، مع DNP في الأرخص)",
+    "addon_connectors": "3× M.2 NGFF Style edge connectors (75-pin)",
+    "philosophy_pillars": [
+      "حلّ مشاكل المنقّب الفعلية (ليس ميزات تقنية)",
+      "تكلفة منخفضة جداً، إغراء الشراء الأوّل",
+      "ترقية معيارية بدلاً من شراء جهاز جديد",
+      "بناء ولاء طويل الأمد عبر Add-ons + Subscriptions"
+    ],
+    "target_markets": [
+      "السوق العربي (السعودية، الإمارات، مصر، المغرب، الجزائر، الأردن، العراق)",
+      "أفريقيا (المنقّبون الحرفيون)",
+      "أوروبا الشرقية (هواية متنامية)",
+      "أمريكا اللاتينية (السوق الناشئ)"
+    ]
+  },
+
+  "Hardware_Analog": {
+    "AFE_Chain_V1": {
+      "topology": "Single-channel PI",
+      "stages": [
+        {
+          "name": "Pre-amp",
+          "ic": "AD8429BRZ",
+          "manufacturer": "Analog Devices",
+          "gain": 100,
+          "noise_density_nv_sqrtHz": 1.0,
+          "package": "SOIC-8",
+          "lcsc": "C2890781",
+          "price_usd": 7.10
+        },
+        {
+          "name": "Post-amp",
+          "ic": "AD797ARZ",
+          "gain": 11,
+          "noise_density_nv_sqrtHz": 0.9,
+          "lcsc": "C9016",
+          "price_usd": 5.30
+        },
+        {
+          "name": "ADC",
+          "ic": "STM32 internal 12-bit + 64x oversampling = effective 15-bit",
+          "sample_rate_ksps": 50,
+          "price_usd": 0
+        }
+      ],
+      "total_gain": 1100,
+      "target_noise_floor_nV_sqrtHz": 50,
+      "anti_alias_filter": "5kHz Sallen-Key 2nd order"
+    },
+
+    "AFE_Chain_V2": {
+      "additions_over_V1": [
+        "PGA281AIPW Auto-Gain (1×, 10×, 100×, 1000×) — $9.50",
+        "ADS1256IDBT 24-bit ADC @ 30kSPS — $14.20",
+        "AQY210EH SSR for Active Damping — $2.30"
+      ],
+      "target_noise_floor_nV_sqrtHz": 15
+    },
+
+    "AFE_Chain_V3": {
+      "topology": "4-Channel parallel PI",
+      "additions_over_V2": [
+        "3× extra (AD8429 + AD797 + PGA281) — $66.30",
+        "ADS1256 second instance for 8-channel total — $14.20",
+        "AD7768-4 optional research-grade ADC — $42.00",
+        "Tetrahedron 4× RM3100 array — $108.00",
+        "Soil EC AC: OPA2134 + INA128 + 4× SSR (Wien Bridge 1kHz) — $9.50"
+      ],
+      "target_noise_floor_nV_sqrtHz": 8
+    },
+
+    "TX_Driver": {
+      "V1": {
+        "fet": "IRF740PBF (single)",
+        "driver": "TC4420CPA",
+        "pulse_width_us": 200,
+        "pulse_period_ms": 5,
+        "current_peak_A": 3.5
+      },
+      "V2": {
+        "fet": "IRF740 ×2 parallel",
+        "current_peak_A": 6.0,
+        "active_damping": "AQY210EH (Dead-time reduction to 8µs)"
+      },
+      "V3": {
+        "fet": "IRF740 ×4 parallel",
+        "current_peak_A": 12.0,
+        "active_damping": "AQY210EH ×2",
+        "energy_harvesting": "LTC3588 from flyback (5% recovery)"
+      }
+    },
+
+    "Power_Tree": {
+      "V1": {
+        "battery": "2× 18650 Li-Ion 3500mAh (7.4V, 25.9Wh)",
+        "main_buck": "MP1584EN (efficient 90%)",
+        "ldo_3v3": "AMS1117-3.3 (replaced from V0)",
+        "isolated_dual_supply": "B0505S-1WR3 (±5V_ANA)",
+        "fuel_gauge": "BQ27441",
+        "battery_life_hours": 18
+      },
+      "V2": {
+        "battery": "LiFePO4 4S 4000mAh (12.8V, 51.2Wh)",
+        "main_buck": "TPS62130A (efficient 95%, low-noise)",
+        "ldo_analog": "TPS7A4700RGW (4µVrms ultra-low-noise)",
+        "charger": "BQ24650 (MPPT, solar ready)",
+        "battery_life_hours": 30
+      },
+      "V3": {
+        "battery": "LiFePO4 4S 8000mAh (12.8V, 102.4Wh)",
+        "additions": [
+          "Solar panel 5W foldable + DC port",
+          "LTC3588 Energy Harvesting from TX flyback",
+          "Wireless charging Qi-compatible"
+        ],
+        "battery_life_hours": 45
+      }
+    },
+
+    "Magnetometer_Sensors": {
+      "V1": "غير موجود (PI فقط)",
+      "V2": {
+        "ic": "RM3100 PNI Sensor Corp",
+        "configuration": "Gradiometer (2 sensors on 50cm boom)",
+        "sensitivity_nT": 13,
+        "noise_density_nT_sqrtHz": 30,
+        "communication": "SPI",
+        "price_usd_each": 27,
+        "imu_companion": "MPU9250 (MEMS 9-axis)"
+      },
+      "V3": {
+        "configuration": "Tetrahedron (4 sensors)",
+        "purpose": "3D Volumetric Imaging via Inverse Magnetic Reconstruction",
+        "additional_imu": "LIS2DH12 backup accelerometer",
+        "calibration_method": "Tikhonov regularization + Ellipsoid fit (60s field cal)"
+      }
+    },
+
+    "Soil_Analysis": {
+      "V1": "Salt Compensation Mode via HDC2080 (humidity + temp) — $1.20",
+      "V2": "Soil Mineralization Bar via existing ADS1256",
+      "V3": {
+        "method": "AC Excitation Wien Bridge",
+        "frequency_Hz": 1000,
+        "components": [
+          "OPA2134 dual op-amp (oscillator)",
+          "INA128 instrumentation amplifier",
+          "AD8542 precision rectifier",
+          "AQY210EH SSR for galvanic isolation"
+        ],
+        "purpose": "تجنب تحلّل أقطاب EC + قياس كيمياء التربة"
+      }
+    },
+
+    "Coil_System": {
+      "V1": {
+        "type": "Concentric (مونو)",
+        "diameter_inch": 9,
+        "wire": "نحاس مطلي 0.5mm × 60 لفّة TX، 200 لفّة RX",
+        "weight_g": 280
+      },
+      "V2": {
+        "type": "DD Coil",
+        "included_sizes_inch": [11, 6],
+        "smart_coil_eeprom": "24LC02 (auto-ID for calibration)"
+      },
+      "V3": {
+        "included_sizes_inch": [13, 17, 5, 15],
+        "13_inch": "DD Smart Coil with onboard STM32G030 preprocessor",
+        "17_inch": "Deep mono",
+        "5_inch": "Sniper",
+        "15_inch": "Folding mono"
+      }
+    },
+
+    "Mainboard_Specs": {
+      "size_mm": "100×60",
+      "layers": {
+        "V1": "2-layer (cost optimization)",
+        "V2": "4-layer (mixed-signal)",
+        "V3": "6-layer (BGA support for STM32H7S)"
+      },
+      "manufacturer": "JLCPCB JLC04161H-7628",
+      "price_per_pcb_usd": {
+        "V1": 3.5,
+        "V2": 8.0,
+        "V3": 22.0
+      }
+    }
+  },
+
+  "Firmware_Embedded": {
+    "MCU_per_version": {
+      "V0": {
+        "main": "STM32F411CEU6 (Black Pill) @ 100MHz",
+        "purpose": "AFE testing only, USB UART debug",
+        "code_size_lines": 200
+      },
+      "V1": {
+        "main": "STM32F411CEU6 @ 100MHz, 512KB Flash, 128KB SRAM",
+        "rtos": "Bare-metal or FreeRTOS lite",
+        "code_size_kb": 250
+      },
+      "V2": {
+        "main": "STM32H743VIT6 @ 480MHz Cortex-M7, 2MB Flash, 1MB SRAM",
+        "companion": "ESP32-C3 mini for BLE 5.0 + WiFi",
+        "rtos": "FreeRTOS with priority-based scheduling",
+        "dsp_library": "CMSIS-DSP (FFT 1024-point in 0.4ms)",
+        "code_size_kb": 850
+      },
+      "V3": {
+        "main": "STM32H7S7L8H6 @ 600MHz M7 + 240MHz M4, 2MB Flash, 1.4MB SRAM, BGA-196",
+        "companions": [
+          "ESP32-C3 mini (BLE)",
+          "ESP32-S3-WROOM (WiFi 6 + Voice 'Hey Hadeed' wake word)",
+          "K210 (AI Vision, optional add-on)",
+          "STM32G030 (Smart-Coil preprocessor)"
+        ],
+        "ai_framework": "TensorFlow Lite Micro + CMSIS-NN",
+        "ai_models": [
+          "Confidence Score (V1+) — 50KB",
+          "Target Class 8 (V2+) — 200KB",
+          "Target Class 16 (V3) — 800KB",
+          "Hot Rock Recognition (V3) — 600KB",
+          "Voice Coach Arabic (Opus codec) — 4MB on µSD"
+        ],
+        "code_size_kb": 2500
+      }
+    },
+
+    "Communication_Protocols": {
+      "internal": {
+        "STM32_to_ESP32": "UART 921600 baud 8N1 + DMA",
+        "framing": "Custom 8-byte header (SOF=0xAA, VER, TYPE, LEN, PAYLOAD, SEQ, CRC-16/CCITT)"
+      },
+      "external_BLE": {
+        "version": "BLE 5.0",
+        "phy": "2M PHY preferred, 1M fallback",
+        "mtu_bytes": 247,
+        "service_uuid": "6E40xxxx-B5A3-F393-E0A9-E50E24DCCA9E",
+        "characteristics": [
+          "TX (Notify): device → app",
+          "RX (Write): app → device",
+          "Status (Read): connection state"
+        ],
+        "security": "LESC Just Works + Bond + Whitelist after first pairing"
+      },
+      "packet_types": {
+        "from_device_0x1X": [
+          "0x10 Mag data",
+          "0x11 IMU data",
+          "0x12 Gradiometer",
+          "0x13 Soil EC",
+          "0x14 ADC raw",
+          "0x15 Battery status",
+          "0x16 GPS",
+          "0x17 Event/Alert"
+        ],
+        "from_app_0x2X": [
+          "0x20 Start scan",
+          "0x21 Stop scan",
+          "0x22 Calibrate",
+          "0x23 Set rate",
+          "0x24 Get info",
+          "0x25 Ack"
+        ],
+        "system_0x3X": ["0x30 Heartbeat", "0x31 Error"]
+      },
+      "units": {
+        "magnetic": "nT (nanoTesla)",
+        "battery": "mV / mA",
+        "gps_coords": "1e-7 degrees",
+        "timestamp": "milliseconds since boot"
+      }
+    },
+
+    "Algorithms": {
+      "noise_cancellation": [
+        "Notch filter 50/60Hz digital",
+        "Adaptive LMS filter for VLF and 5G interference (V2+)",
+        "FFT-based noise spectrum analysis (V2+)",
+        "Bump cancellation via IMU (V1+)"
+      ],
+      "target_detection": [
+        "Confidence Meter (1-100%) — V1+",
+        "Voice 'Dig or Skip' recommendation (Arabic) — V1+",
+        "Multi-Sweep Triangulation for tilted targets (V2+)",
+        "Halo Effect detection via signal shape (V2+)",
+        "2D-FFT Spatial Filter for Iron Masking (V3)",
+        "Hot Rock Recognition AI (V3)"
+      ],
+      "imaging": [
+        "1D depth estimation with ±10cm error margin (V1)",
+        "2.5D Target Imaging via Mag Gradiometer (V2)",
+        "3D Volumetric Imaging via Inverse Magnetic Reconstruction (V3, runs on phone)"
+      ],
+      "ground_balance": [
+        "Auto Ground Balance (3s) — V1+",
+        "Continuous re-cal every 30s (V2+)",
+        "Salt Compensation Mode via HDC2080 (V1+)",
+        "Soil EC AC chemical analysis (V3)"
+      ],
+      "ai_classification": {
+        "V1": "4 classes (Iron, Brass, Silver, Gold)",
+        "V2": "8 classes + Decay Curve Fingerprint",
+        "V3": "16+ classes + Cloud reference DB of 100,000 signals + Treasure Score 0-100"
+      }
+    },
+
+    "Power_Modes": {
+      "active": "All sensors, full DSP, BLE on (300-500 mA)",
+      "scan_only": "AFE + Mag, no display (180 mA)",
+      "deep_sleep": "MCU stop mode, RTC + button only (50 µA)",
+      "shipping": "Full power-off (<5 µA)"
+    },
+
+    "Storage_Layout_eMMC_or_SD": {
+      "boot_partition_MB": 4,
+      "firmware_main_MB": 8,
+      "firmware_backup_MB": 8,
+      "voice_files_MB": 10,
+      "ai_models_MB": 4,
+      "user_data_MB": "remaining (calibrations, logs, finds, offline maps)"
+    },
+
+    "OTA_Update_Strategy": {
+      "method": "Dual-bank firmware (active + backup)",
+      "transport": "BLE (V1) or WiFi (V2+) or LTE (V3)",
+      "rollback": "Auto-revert if boot fails 3 times",
+      "ai_model_updates": "Separate from firmware, smaller payloads"
+    }
+  },
+
+  "Android_App": {
+    "name": "Hadeed Companion",
+    "platform": "Android 8+ (Kotlin) + iOS 13+ (Swift) planned for V2",
+    "core_features": [
+      "BLE pairing via NFC tap (V1+)",
+      "Live signal display + Confidence Meter (V1+)",
+      "Treasure Diary with photos and GPS (V1+)",
+      "5 quick-mode selector (V1+)",
+      "AR Tutorial for beginners (V1+)",
+      "Voice Coach playback control (V1+)",
+      "Heatmap of searched areas (V2+)",
+      "AR Pinpoint via phone camera (V2+)",
+      "Target Imaging 2.5D visualization (V2+)",
+      "Geofencing for legal alerts (V2+)",
+      "Time-Lapse Site History video (V3)",
+      "AR X-Ray Mode (V3)",
+      "AI-Generated Story for each find (V3)",
+      "Multi-Device Sync for teams (V3)",
+      "Family Mode treasure game (V3)",
+      "Hadeed Buyback Program portal (V3)",
+      "Hadeed Academy 50+ video courses (V3)"
+    ],
+    "architecture": "Offline-First, Cloud Sync optional",
+    "data_views_3D": [
+      "3D scatter plot of mag readings",
+      "Heatmap overlay on Google Maps / OSM offline",
+      "3D Volumetric reconstruction (V3 only, requires WebGL)"
+    ],
+    "subscription_tiers": {
+      "Free": "All basic features",
+      "Pro $5/month": "Cloud storage, advanced filters, premium maps, Crowd-Sourced Treasure Map access",
+      "Academy $30 one-time": "50+ video courses + certificate"
+    }
+  },
+
+  "Modular_Upgrade_System": {
+    "addon_boards": [
+      {
+        "id": "AB-01",
+        "name": "Mag Gradiometer Add-on",
+        "components": "RM3100 ×2 + boom + connector",
+        "price_usd": 80,
+        "upgrades": "V1 → V1.5"
+      },
+      {
+        "id": "AB-02",
+        "name": "GPS + LTE Add-on",
+        "components": "Quectel L86 + SIM7080G + antenna",
+        "price_usd": 65,
+        "upgrades": "V1.5 → V2"
+      },
+      {
+        "id": "AB-03",
+        "name": "High-Res ADC Add-on",
+        "components": "ADS1256 + AD7768-4 + PGA281",
+        "price_usd": 90,
+        "upgrades": "V2 → V2.5"
+      },
+      {
+        "id": "AB-04",
+        "name": "AI Vision Add-on",
+        "components": "K210 + OV5640 + 6× LED 1W",
+        "price_usd": 50,
+        "upgrades": "V2.5 → V3 partial"
+      },
+      {
+        "id": "AB-05",
+        "name": "4-Channel AFE Add-on",
+        "components": "3× extra AD8429 + AD797 + PGA281",
+        "price_usd": 130,
+        "upgrades": "V3 partial → V3 full"
+      },
+      {
+        "id": "AB-06",
+        "name": "Tetrahedron Mag Add-on",
+        "components": "RM3100 ×2 extra + bridge + LIS2DH12",
+        "price_usd": 90,
+        "upgrades": "V3 → V3 Pro"
+      },
+      {
+        "id": "AB-07",
+        "name": "Solar + LTE Premium",
+        "components": "Solar panel 5W + LTE-M module",
+        "price_usd": 45,
+        "upgrades": "Any version"
+      },
+      {
+        "id": "AB-08",
+        "name": "Premium Display",
+        "components": "TFT 3.5\" Touch + housing",
+        "price_usd": 60,
+        "upgrades": "V1/V2 → V2/V3"
+      },
+      {
+        "id": "AB-09",
+        "name": "Coil Kit Bundle",
+        "components": "3 extra coils (DD 11\", Sniper 5\", Deep 15\")",
+        "price_usd": 120,
+        "upgrades": "Any version"
+      }
+    ],
+    "upgrade_paths": {
+      "V1_to_V2": {
+        "addons": ["AB-01", "AB-02", "AB-08"],
+        "cost_usd": 205,
+        "savings_vs_buying_V2": "19%"
+      },
+      "V1_to_V3": {
+        "addons": ["AB-01", "AB-02", "AB-03", "AB-04", "AB-05", "AB-06", "AB-08"],
+        "cost_usd": 560,
+        "savings_vs_buying_V3": "31%"
+      },
+      "V2_to_V3": {
+        "addons": ["AB-04", "AB-05", "AB-06"],
+        "cost_usd": 270,
+        "savings_vs_buying_V3": "30%"
+      }
+    },
+    "service_centers": "Amman, Riyadh, Cairo, Casablanca, Dubai, Algiers, Baghdad",
+    "service_fee_per_upgrade_usd": 20
+  },
+
+  "Killer_Features_10": {
+    "KF-01": "Treasure Whisper (همسة سرّية في السماعة عند Score >90)",
+    "KF-02": "Time-Lapse Site History (فيديو يُصنع تلقائياً)",
+    "KF-03": "Treasure Score Leaderboard (لوحة شرف عالمية)",
+    "KF-04": "Crowd-Sourced Treasure Map (خريطة جماعية حصرية)",
+    "KF-05": "AI-Generated Story لكل اكتشاف",
+    "KF-06": "Hadeed Buyback Program (نشتري ما تجد)",
+    "KF-07": "Family Mode (لعبة كنوز للأطفال)",
+    "KF-08": "Voice-Controlled 'Hey Hadeed'",
+    "KF-09": "Aerial Drone Companion ($150 ملحق)",
+    "KF-10": "AR X-Ray Mode عبر كاميرا الهاتف"
+  },
+
+  "User_Pain_Points_23": {
+    "original_12": [
+      {"id": "P1", "name": "إشارات كاذبة", "complaint_pct": 87},
+      {"id": "P2", "name": "حفر عشوائي", "complaint_pct": 85},
+      {"id": "P3", "name": "قراءات عمق كاذبة", "complaint_pct": 78},
+      {"id": "P4", "name": "تربة متمعدنة", "complaint_pct": 73},
+      {"id": "P5", "name": "صعوبة الاستخدام", "complaint_pct": 69},
+      {"id": "P6", "name": "Pinpointing سيئ", "complaint_pct": 65},
+      {"id": "P7", "name": "البطارية", "complaint_pct": 62},
+      {"id": "P8", "name": "الوزن والإجهاد", "complaint_pct": 58},
+      {"id": "P9", "name": "لا ذاكرة للمواقع", "complaint_pct": 54},
+      {"id": "P10", "name": "قطع غيار", "complaint_pct": 49},
+      {"id": "P11", "name": "الخوف القانوني", "complaint_pct": 44},
+      {"id": "P12", "name": "الإحباط", "complaint_pct": 40}
+    ],
+    "additional_11": [
+      {"id": "P13", "name": "Iron Masking"},
+      {"id": "P14", "name": "Coil Bumping على العشب"},
+      {"id": "P15", "name": "صعوبة سماع التون في البيئات الصاخبة (حلّ: Haptic Wristband)"},
+      {"id": "P16", "name": "متى أتوقّف عن البحث في موقع (Site Productivity Score)"},
+      {"id": "P17", "name": "معايرة الكوايل الجديدة (Smart-Coil Auto-ID)"},
+      {"id": "P18", "name": "السرقة (Anti-Theft + GPS Tracking)"},
+      {"id": "P19", "name": "التطبيق يحتاج إنترنت (Offline-First)"},
+      {"id": "P20", "name": "الحفر الليلي (LED 6×1W)"},
+      {"id": "P21", "name": "Hot Rocks الصخور المغناطيسية الطبيعية"},
+      {"id": "P22", "name": "IP Rating كاذب (Triple Seal + Aqua Cert)"},
+      {"id": "P23", "name": "لا تجربة قبل الشراء (Try-Before-Buy 7 أيام)"}
+    ]
+  },
+
+  "Versions": {
+    "V0_Workshop_Mule": {
+      "purpose": "إثبات سلسلة AFE قبل أيّ PCB",
+      "duration_weeks": 4,
+      "cost_usd": 50,
+      "type": "Perfboard prototype, internal lab tool only",
+      "key_components": ["Black Pill F411", "AD8429", "AD797", "IRF740", "TC4420"],
+      "success_criteria": "Noise Floor < 50 nV/√Hz @ 1kHz",
+      "not_for_sale": true
+    },
+    "V1_Pioneer_Plus": {
+      "tier": "Entry-level (Affordable)",
+      "target_competitor": "Nokta Simplex+ ($300)",
+      "selling_price_usd": 179,
+      "manufacturing_cost_usd": 92,
+      "margin_pct": 49,
+      "features": [
+        "Single-channel PI",
+        "Confidence Meter 0-100%",
+        "Voice Coach Arabic (5 dialects)",
+        "5 quick modes (Beach/Field/Relics/Gold/Custom)",
+        "Discreet Mode",
+        "Salt Compensation",
+        "OLED 1.3\" + 12× WS2812 Pinpoint Ring",
+        "BLE 5.0 + companion app",
+        "18650 ×2 swappable, 18h life",
+        "ABS housing IP54",
+        "Carbon Shaft",
+        "1-year warranty"
+      ],
+      "depth_air_test_8g_gold_dinar_cm": 45,
+      "battery_life_hours": 18,
+      "weight_kg": 1.1,
+      "annual_sales_target_units": 5000
+    },
+    "V2_Hunter_Pro": {
+      "tier": "Mid-range (Workhorse)",
+      "target_competitor": "Minelab Equinox 600 ($700)",
+      "selling_price_usd": 499,
+      "manufacturing_cost_usd": 310,
+      "margin_pct": 38,
+      "features": [
+        "Hybrid PI + Mag Gradiometer",
+        "ADS1256 24-bit ADC + PGA281 Auto-Gain",
+        "Active Damping (8µs dead-time)",
+        "GPS Quectel L86 + Heatmap",
+        "TFT 2.4\" Color + 8 buttons",
+        "Target Imaging 2.5D",
+        "Power-Bank Mode (charge phone)",
+        "Heated grip optional",
+        "LiFePO4 4Ah swappable, 30h life",
+        "IP65 Composite housing",
+        "Carbon Shaft Premium",
+        "3 coils included (DD 11\" + Sniper 6\")",
+        "2-year warranty",
+        "3 active Add-on slots for upgrades"
+      ],
+      "depth_air_test_8g_gold_dinar_cm": 80,
+      "battery_life_hours": 30,
+      "weight_kg": 1.3,
+      "annual_sales_target_units": 2500
+    },
+    "V3_Sovereign_Elite": {
+      "tier": "Premium (Tier-1 Competitor)",
+      "target_competitor": "Minelab CTX 3030 + XP Deus II ($2800)",
+      "selling_price_usd": 1099,
+      "manufacturing_cost_usd": 820,
+      "margin_pct": 25,
+      "recommended_bundle_price_usd": 1399,
+      "features_unique_globally": [
+        "Tetrahedron 4× RM3100 Mag Array",
+        "4-channel parallel AFE (real, not MUX)",
+        "3D Volumetric Imaging (Inverse Reconstruction)",
+        "AI 16+ class Discrimination",
+        "Treasure Score 0-100 (AI-based)",
+        "Hot Rock Recognition AI",
+        "Soil EC AC (Wien Bridge)",
+        "Smart-Coil with onboard STM32G030",
+        "Voice 'Hey Hadeed' wake word",
+        "Triple Radio (BLE + WiFi 6 + LTE-M)",
+        "Solar charge ready",
+        "Energy Harvesting from TX flyback",
+        "Anti-Theft Fingerprint + GPS Tracking",
+        "AR X-Ray Mode via phone",
+        "Cloud Crowd-Sourced Treasure Map",
+        "Hadeed Academy 50 video courses",
+        "Multi-Device Sync for teams",
+        "AMOLED option for Pro version"
+      ],
+      "depth_air_test_8g_gold_dinar_cm": 130,
+      "battery_life_hours": 45,
+      "weight_kg": 1.5,
+      "ip_rating": "IP68 (1m / 30 min underwater)",
+      "annual_sales_target_units": 1000,
+      "coils_included": [
+        "DD 13\" Smart Coil (with STM32G030)",
+        "17\" Deep Mono",
+        "5\" Sniper",
+        "15\" Folding"
+      ]
+    }
+  },
+
+  "Manufacturing_Roadmap": {
+    "phases_per_version": [
+      "M1 Concept & PRD (2 weeks)",
+      "M2 Schematic Design (4 weeks)",
+      "M3 PCB Layout (3 weeks)",
+      "M4 DVT1 Prototype (4 weeks)",
+      "M5 Firmware & App (12 weeks parallel)",
+      "M6 EVT/DVT/PVT Testing (8 weeks)",
+      "M7 Certifications CE/FCC/RoHS (6 weeks)",
+      "M8 Mass Production (8 weeks)",
+      "M9 Sales & Aftersales (continuous)"
+    ],
+    "total_timeline_months": {
+      "V0": 1,
+      "V1": 6,
+      "V2": 8,
+      "V3": 14
+    },
+    "total_dev_budget_usd": {
+      "V0": 50,
+      "V1": 35000,
+      "V2": 75000,
+      "V3": 180000,
+      "platform_total": 290050
+    },
+    "manufacturing_partners": {
+      "V0": "DIY in workshop",
+      "V1": "JLCPCB (PCB) + manual assembly + local case",
+      "V2": "JLCPCB + JLCPCBA SMT + local final assembly",
+      "V3": "Specialized small-batch factory (China, MOQ 500)"
+    }
+  },
+
+  "Risk_Register": [
+    {"risk": "Confidence Meter accuracy in real fields", "probability": "Medium", "impact": "High", "mitigation": "Beta with 50 users in 5 Arab countries"},
+    {"risk": "AD8429 supply shortage", "probability": "Low", "impact": "High", "mitigation": "Second source: INA128 (15% perf loss)"},
+    {"risk": "EMI fails CE certification", "probability": "High", "impact": "Critical", "mitigation": "Pre-compliance scan before official lab"},
+    {"risk": "Plug-and-Play unreliable", "probability": "Medium", "impact": "High", "mitigation": "Test 50 upgrades on prototypes"},
+    {"risk": "LiFePO4 battery supply chain", "probability": "Low", "impact": "Medium", "mitigation": "Long-term contract with 2 Chinese suppliers"},
+    {"risk": "Voice Coach Arabic accent rejected", "probability": "Medium", "impact": "Low", "mitigation": "5 dialect recordings + user choice"},
+    {"risk": "Chinese clones IP theft", "probability": "High", "impact": "Medium", "mitigation": "Patent core algorithms + speed to market"},
+    {"risk": "Cloud Service downtime", "probability": "Low", "impact": "Medium", "mitigation": "Multi-region AWS + Offline-First design"}
+  ],
+
+  "Financial_Projections": {
+    "year_1": {
+      "V1_units": 5000,
+      "V2_units": 0,
+      "V3_units": 0,
+      "addon_revenue_usd": 0,
+      "subscription_revenue_usd": 0,
+      "total_revenue_usd": 895000,
+      "total_profit_usd": 435000
+    },
+    "year_2": {
+      "V1_units": 6000,
+      "V2_units": 1500,
+      "V3_units": 0,
+      "upgrades_V1_to_V2": 800,
+      "addon_revenue_usd": 200000,
+      "subscription_revenue_usd": 150000,
+      "total_revenue_usd": 2398000,
+      "total_profit_usd": 1080000
+    },
+    "year_3": {
+      "V1_units": 7000,
+      "V2_units": 2500,
+      "V3_units": 1000,
+      "upgrades_total": 2200,
+      "addon_revenue_usd": 400000,
+      "subscription_revenue_usd": 450000,
+      "buyback_commission_usd": 50000,
+      "academy_revenue_usd": 60000,
+      "total_revenue_usd": 4350000,
+      "total_profit_usd": 2050000
+    },
+    "year_3_growth_pct_vs_traditional_model": 127
+  },
+
+  "Decision_Log": [
+    {"date": "2026-04-29", "decision": "V0 Perfboard before any PCB", "rationale": "Prove AFE works first"},
+    {"date": "2026-04-29", "decision": "Adopt Star Ground at AD797 pin", "rationale": "Avoid 75% noise issues"},
+    {"date": "2026-04-29", "decision": "Add 13 missing critical components to BOM v2", "rationale": "Original BOM was incomplete"},
+    {"date": "2026-04-30", "decision": "Replace PGA855 with PGA281", "rationale": "PGA855 not actually available"},
+    {"date": "2026-04-30", "decision": "Replace LM2596 with MP1584", "rationale": "Better efficiency, less heat"},
+    {"date": "2026-04-30", "decision": "EC circuit must be AC (Wien Bridge)", "rationale": "DC dissolves probes chemically"},
+    {"date": "2026-04-30", "decision": "Freeze BLE protocol v1.0", "rationale": "Prevent code thrashing"},
+    {"date": "2026-04-30", "decision": "Consolidate to single MCU per version", "rationale": "Value Engineering, reduce complexity"},
+    {"date": "2026-04-30", "decision": "MUX 4 RX channels via ADG1409 (V1/V2)", "rationale": "Save $15 + 5 components"},
+    {"date": "2026-04-30", "decision": "Replace MPU9250 with LIS2DH12 in V1/V2", "rationale": "Cost + power savings"},
+    {"date": "2026-05-01", "decision": "Extract 160 ideas via forensic analysis", "rationale": "Complete inventory before lineup"},
+    {"date": "2026-05-02", "decision": "4-version lineup V0/V1/V2/V3", "rationale": "Cover all market tiers"},
+    {"date": "2026-05-03", "decision": "Pivot to user-centered design (Confidence Meter)", "rationale": "Users want solutions, not specs"},
+    {"date": "2026-05-03", "decision": "Add 11 new pain points beyond original 12", "rationale": "Deeper user research"},
+    {"date": "2026-05-04", "decision": "Adopt modular upgrade system with M.2 NGFF", "rationale": "Enable affordable upgrades, lock-in"},
+    {"date": "2026-05-04", "decision": "Lower V1 price to $179", "rationale": "Hook users, profit on add-ons"},
+    {"date": "2026-05-04", "decision": "Add 10 killer features", "rationale": "Features Tier-1 don't have"},
+    {"date": "2026-05-05", "decision": "Master Architecture Roadmap v3 finalized", "rationale": "Single source of truth for project"}
+  ]
+}
