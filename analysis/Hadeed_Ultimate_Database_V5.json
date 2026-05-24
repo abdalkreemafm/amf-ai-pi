@@ -1,0 +1,99 @@
+{
+  "Project_Hadeed_Master_Manifest": {
+    "Meta_Information": {
+      "project_name": "Hadeed Sentient Platform",
+      "version": "5.0_The_Masterpiece",
+      "date_generated": "2026-05-21",
+      "philosophy": "Software-Defined, Autonomous, Emotionally Intelligent Metal Detection. جهاز يتصرف كرفيق واعي، بزر واحد وشاشة قيادة ذكية، يتعلم محلياً، ويتعافى من الأخطاء صمتاً."
+    },
+
+    "1_Hardware_and_UI_Paradigm": {
+      "Physical_Interface": {
+        "Buttons": "زر واحد (لمس سعوي أو مغناطيسي مخفي) لمنع أعطال الرمل والماء.",
+        "Screen": "شاشة Transflective LCD (Smart Dashboard) تزداد وضوحاً تحت شمس الصحراء، وتعرض الخلاصة فقط (نوع الهدف، الثقة، العمق).",
+        "Indicators": "حلقة إضاءة تكتيكية RGB، وطنان صوتي داخلي (Buzzer) للطوارئ إذا انقطع الهاتف."
+      },
+      "Power_and_Survival": {
+        "Charging": "منفذ USB-C PD مع دعم (الشحن العكسي Reverse Charging) لإنقاذ هاتف المستخدم في البرية.",
+        "Protection": "مضاد للماء والغبار IP68 (بسبب إلغاء الأزرار الميكانيكية)."
+      },
+      "Security_and_Anti_Clone": {
+        "Hardware_DRM": "تشفير RDP للمعالج + مصافحة مشفرة (Cryptographic Handshake) بين الكويل والجهاز لرفض أي قطع مقلدة صينية."
+      }
+    },
+
+    "2_Software_Architecture_5_Layers": {
+      "Layer_1_Hardware_Drivers": {
+        "Zero_Latency_Engine": "استخدام الـ DMA لنقل بيانات الحساسات (ADC & RM3100) للذاكرة دون إشغال المعالج.",
+        "Pulse_Shaping": "تحكم HRTIM بتوليد نبضات ذكية (ناعمة للعمق، حادة للسطح)."
+      },
+      "Layer_2_DSP_Subconscious": {
+        "Algorithms": [
+          "Adaptive Kalman Filter (فلتر الضجيج التكيفي)",
+          "Time-Domain Spectral Unwrapping (عزل بصمة الحديد المؤكسد)",
+          "Software Iron Masking 2D-FFT (اختراق قناع الحديد)",
+          "Stochastic Resonance Dithering (اصطياد الأعماق بالرنين العشوائي)"
+        ],
+        "Cable_Noise_Rejection": "تصفية ضجيج حركة السلك برمجياً لمنع الإشارات الكاذبة."
+      },
+      "Layer_3_AI_Auto_Pilot_and_State_Machine": {
+        "Dynamic_Resource_Manager": "إطفاء وإيقاظ الحساسات استباقياً لتوفير البطارية.",
+        "TinyML_Classifier": "نظام أوزان ثابت (Fixed-size) لضمان سرعة المعالجة اللحظية مدى الحياة دون تضخم برمجي.",
+        "Resilience_Engine": "التعافي الذاتي (Self-Healing) لتجاهل القراءات المتضاربة دون تجميد النظام (Crash)."
+      },
+      "Layer_4_Nervous_System_BLE": {
+        "Smart_Handshake": "إرسال أكواد خفيفة (مثلاً 0x1A) للهاتف بدلاً من الصوت، لضمان استجابة صفرية التأخير.",
+        "Dual_Bank_OTA": "نظام تحديث هوائي مزدوج يحمي الجهاز من الموت (Bricking) إذا انطفأ أثناء التحديث."
+      },
+      "Layer_5_The_Companion_App": {
+        "Audio_Engine": "تشغيل الصوت عبر سماعة الهاتف (أو سلكية) بـ Zero-Latency باستخدام مكتبات SoundPool.",
+        "Background_Survival": "برمجة التطبيق كـ (Foreground Service) لمنع نظام الهاتف من قتله وهو في الجيب."
+      }
+    },
+
+    "3_Artificial_Emotional_Intelligence_EQ": {
+      "Dynamic_Empathy_Engine": {
+        "Concept": "استخدام مصفوفات نصوص متغيرة لعدم إزعاج المستخدم بتكرار الأوامر الآلية.",
+        "Example_Speed_Correction": [
+          "يا صديقي، تمهل رجاءً لكي لا يذهب عملنا سدى.",
+          "خطواتك ممتازة، لو نبطئ قليلاً سنرى ما تحت الصخرة بوضوح."
+        ],
+        "Dynamic_Verbosity": "التطبيق ثرثار في أول 10 دقائق للتوجيه، ثم يدخل في 'الصمت العميق' ويكتفي بنغمات خفيفة لمنع الإرهاق العصبي للمنقب."
+      }
+    },
+
+    "4_Edge_Learning_and_Data_Strategy": {
+      "Local_Personalized_AI": "يتعلم الجهاز من أخطائه. المستخدم يعلمه بالنقر على الزر ('هذه خردة')، التطبيق يغير الأوزان محلياً ويرسل التحديث للجهاز بدون إنترنت.",
+      "Cloud_Identity_Sync": "حفظ 'عقل الذكاء الاصطناعي' الخاص بالمستخدم سحابياً لاسترجاعه فوراً إذا ضاع هاتفه.",
+      "Anonymous_Value_Exchange_Marketing": {
+        "Psychology_Hook": "احترام سرية المنقب القصوى. لا نطلب موقعه أبداً.",
+        "The_Pitch": "رسالة التطبيق: 'بادل البصمات المجهولة (بدون موقعك) لمختبراتنا، واحصل فوراً على [باقة اختراق البازلت] مجاناً مدى الحياة!'",
+        "Result": "المنقب يحصل على قيمة ضخمة، والشركة تحصل على بيانات هائلة مجانية لتدريب ذكاء اصطناعي عالمي خارق."
+      }
+    },
+
+    "5_Tactical_and_Legal_Shields": {
+      "Geofencing_Safe_Zone": "خريطة مدمجة بالمواقع المحظورة والأثرية. التطبيق يهمس للمنقب إذا اقترب منها لحمايته قانونياً ولإضفاء طابع المسؤولية على الشركة.",
+      "Stealth_Blackout_Mode": "البحث المظلم الصامت لتوفير أقصى درجات السرية والراحة النفسية في الجبال."
+    },
+
+    "6_Feature_Distribution_Matrix": {
+      "V1_Pioneer": [
+        "AI-Companion Lite (صوت التطبيق والتوجيه)", "Stealth Mode", "Auto-Pilot Basic"
+      ],
+      "V2_Hunter": [
+        "All V1", "Spectral Unwrapping", "Stochastic Dithering", "2D-FFT", "Digital Zoom Phase"
+      ],
+      "V3_Sovereign": [
+        "All V2", "Chemical Fingerprinting (قنطرة وين)", "Behavioral Calibration (IMU)", "Full 3D Audio Holography", "Virtual Coil Resizing"
+      ]
+    },
+
+    "7_The_Developer_Commandments": {
+      "Rule_1": "لا تستخدم دالة Delay نهائياً (No Blocking Code).",
+      "Rule_2": "جميع العمليات الحساسة زمنياً يجب أن تُدار بـ DMA و RTOS Preemption.",
+      "Rule_3": "الكتابة على ذاكرة الـ Flash تتم مرة واحدة عند إطفاء الجهاز فقط لحماية عمر الذاكرة.",
+      "Rule_4": "في حال فشل أي مستشعر، اعزل المستشعر برمجياً وتابع العمل دون إيقاف الجهاز (Graceful Degradation)."
+    }
+  }
+}
