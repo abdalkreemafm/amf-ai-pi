@@ -17,7 +17,7 @@ jobs:
       - name: Install test dependency
         run: python -m pip install --disable-pip-version-check pytest
       - name: Run protocol tests
-        run: python -m pytest -q tests/test_protocol.py
+        run: python -m pytest -q tests/test_protocol.py tests/test_k210_protocol.py
       - name: Run dependency-free smoke test
         run: python tools/validate_protocol.py
 

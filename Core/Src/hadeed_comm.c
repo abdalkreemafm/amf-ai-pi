@@ -1,169 +1,66 @@
-/**
-  ******************************************************************************
-  * @file           : hadeed_comm.c
-  * @brief          : Encrypted Communication & BLE Protocol Engine
-  * @author         : Abdul Karim (AMF Tech) & Manus AI
-  * @date           : 2026-06-01
-  ******************************************************************************
-  * @attention
-  * Manages encrypted handshakes with the mobile app and high-speed data 
-  * streaming for 3D visualization. Uses DMA for non-blocking UART transfer.
-  ******************************************************************************
-  */
-
 #include "hadeed_math.h"
 #include "hadeed_logic.h"
 #include "hadeed_config.h"
+#include "hadeed_protocol.h"
 #include "main.h"
-#include <string.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-/* --- 1. PRIVATE CONSTANTS & PACKET STRUCTURE --- */
-#define COMM_START_BYTE          0xAA  // رمز بداية الحزمة
-#define COMM_VERSION             0x07  // نسخة البروتوكول v7
-#define AES_KEY_HINT             0x5F  // مفتاح تشفير بسيط (يُستبدل بـ AES في النسخة النهائية)
+static uint8_t tx_buffer[HADEED_PROTOCOL_MAX_FRAME_SIZE];
 
-#pragma pack(push, 1)
-typedef struct {
-    uint8_t  start_byte;
-    uint8_t  proto_ver;
-    uint8_t  packet_type;   // 0x10: Target, 0x20: Voice, 0x30: 3D Data
-    uint8_t  payload[12];   // البيانات الفعلية
-    uint16_t crc16;         // فحص السلامة
-} Hadeed_Packet_t;
-#pragma pack(pop)
-
-/* --- 2. INTERNAL UTILS --- */
-
-/**
- * @brief حساب الـ CRC16 لضمان عدم ضياع أي بت في الجو
- */
-static uint16_t Compute_CRC16(uint8_t *data, uint16_t len) {
-    uint16_t crc = 0xFFFF;
-    for (uint16_t i = 0; i < len; i++) {
-        crc ^= data[i];
-        for (int j = 0; j < 8; j++) {
-            if (crc & 1) crc = (crc >> 1) ^ 0xA001;
-            else crc >>= 1;
-        }
-    }
-    return crc;
+static void put_i16_be(uint8_t *out, int16_t value) {
+    uint16_t raw = (uint16_t)value;
+    out[0] = (uint8_t)(raw >> 8);
+    out[1] = (uint8_t)raw;
 }
 
-/**
- * @brief تشفير الحزمة (XOR Encryption) لمنع التطبيقات الخارجية من قراءة البيانات
- */
-static void Hadeed_Encrypt_Payload(uint8_t *payload, uint8_t len) {
-    for (uint8_t i = 0; i < len; i++) {
-        payload[i] ^= (AES_KEY_HINT + i);
-    }
+static bool send_frame(uint8_t message_type, const uint8_t *payload, uint16_t payload_length) {
+    Hadeed_Protocol_Frame_t frame = {
+        .message_type = message_type,
+        .sequence = HAL_GetTick(),
+        .timestamp_ms = HAL_GetTick(),
+        .payload = payload,
+        .payload_length = payload_length,
+    };
+    size_t length = 0u;
+    if (Hadeed_Protocol_Encode(&frame, tx_buffer, sizeof(tx_buffer), &length) != HADEED_PROTOCOL_OK) return false;
+    return HAL_UART_Transmit_DMA(&huart1, tx_buffer, (uint16_t)length) == HAL_OK;
 }
 
-/* --- 3. MAIN COMMUNICATION INTERFACE --- */
-
-/**
- * @brief إرسال حزمة بيانات متكاملة للتطبيق عبر الـ DMA
- */
-static void Hadeed_Comm_Send_Raw(Hadeed_Packet_t *pkt) {
-    pkt->crc16 = Compute_CRC16((uint8_t*)pkt, sizeof(Hadeed_Packet_t) - 2);
-    // إرسال عبر UART الموصول بموديول البلوتوث (ESP32-C3)
-    HAL_UART_Transmit_DMA(&huart1, (uint8_t*)pkt, sizeof(Hadeed_Packet_t));
-}
-
-/**
- * @brief إرسال تحديث الهدف (الذهب، الفراغ، العمق) للشاشة والتطبيق
- */
 void Hadeed_Comm_Send_Target_Update(Hadeed_Target_Feature_t *target) {
-    Hadeed_Packet_t pkt;
-    pkt.start_byte  = COMM_START_BYTE;
-    pkt.proto_ver   = COMM_VERSION;
-    pkt.packet_type = 0x10; // Target Update
-
-    // تعبئة البيانات (تحويل Floating point لـ Bytes مضغوطة)
-    int16_t amp   = (int16_t)(target->peak_amplitude);
-    int8_t  depth = (uint8_t)(target->estimated_depth_cm);
-    int8_t  conf  = (uint8_t)(target->confidence_score);
-    uint8_t type  = target->target_type;
-
-    memcpy(&pkt.payload[0], &amp, 2);
-    pkt.payload[2] = depth;
-    pkt.payload[3] = conf;
-    pkt.payload[4] = type;
-
-    Hadeed_Encrypt_Payload(pkt.payload, 12);
-    Hadeed_Comm_Send_Raw(&pkt);
+    if (target == NULL) return;
+    uint8_t payload[9] = {0};
+    put_i16_be(&payload[0], (int16_t)target->peak_amplitude);
+    payload[2] = (uint8_t)(target->estimated_depth_cm > 255.0f ? 255u : target->estimated_depth_cm);
+    payload[3] = target->confidence_score;
+    payload[4] = target->target_type;
+    (void)send_frame(HADEED_PROTOCOL_MSG_TARGET_UPDATE, payload, sizeof(payload));
 }
 
-/**
- * @brief إرسال "الزناد الصوتي" (Voice Trigger) للمرافق الذكي
- * @param voice_packet يحتوي على (Event Code + Variation ID)
- */
 void Hadeed_Comm_Send_Voice_Trigger(uint16_t voice_packet) {
-    Hadeed_Packet_t pkt;
-    pkt.start_byte  = COMM_START_BYTE;
-    pkt.proto_ver   = COMM_VERSION;
-    pkt.packet_type = 0x20; // Voice Command
-
-    memcpy(pkt.payload, &voice_packet, 2);
-    
-    // تصفير بقية الـ payload
-    memset(&pkt.payload[2], 0, 10);
-
-    Hadeed_Encrypt_Payload(pkt.payload, 12);
-    Hadeed_Comm_Send_Raw(&pkt);
+    uint8_t payload[2] = {(uint8_t)(voice_packet >> 8), (uint8_t)voice_packet};
+    (void)send_frame(HADEED_PROTOCOL_MSG_VOICE_TRIGGER, payload, sizeof(payload));
 }
 
-/**
- * @brief إرسال بيانات المسح الميداني للرسم ثلاثي الأبعاد (3D Visualization)
- */
 void Hadeed_Comm_Send_3D_Frame(float mag_val, float pi_val, float x, float y) {
-    Hadeed_Packet_t pkt;
-    pkt.start_byte  = COMM_START_BYTE;
-    pkt.proto_ver   = COMM_VERSION;
-    pkt.packet_type = 0x30; // 3D Spatial Frame
-
-    // تحويل البيانات لإحداثيات فراغية يفهمها محرك Unity/Flutter
-    int16_t m = (int16_t)mag_val;
-    int16_t p = (int16_t)pi_val;
-    int16_t posX = (int16_t)(x * 100);
-    int16_t posY = (int16_t)(y * 100);
-
-    memcpy(&pkt.payload[0], &m, 2);
-    memcpy(&pkt.payload[2], &p, 2);
-    memcpy(&pkt.payload[4], &posX, 2);
-    memcpy(&pkt.payload[6], &posY, 2);
-
-    Hadeed_Encrypt_Payload(pkt.payload, 12);
-    Hadeed_Comm_Send_Raw(&pkt);
+    uint8_t payload[8];
+    put_i16_be(&payload[0], (int16_t)mag_val);
+    put_i16_be(&payload[2], (int16_t)pi_val);
+    put_i16_be(&payload[4], (int16_t)(x * 100.0f));
+    put_i16_be(&payload[6], (int16_t)(y * 100.0f));
+    (void)send_frame(HADEED_PROTOCOL_MSG_3D_FRAME, payload, sizeof(payload));
 }
 
-/* --- 4. SECURITY HANDSHAKE (المصافحة الأمنية) --- */
-
-/**
- * @brief التحقق من هوية التطبيق (منع البرامج المزيفة من الاتصال)
- */
+/* Insecure fixed challenge/XOR authentication was intentionally removed.
+ * This remains disabled until BLE Secure Connections and key provisioning are
+ * implemented with a hardware-backed secret. */
 bool Hadeed_Comm_Perform_Security_Handshake(void) {
-    uint8_t challenge[4] = {0xDE, 0xAD, 0xBE, 0xEF};
-    uint8_t response[4];
-
-    // إرسال تحدي للتطبيق
-    HAL_UART_Transmit(&huart1, challenge, 4, 100);
-
-    // انتظار الرد المشفر من الموبايل
-    if (HAL_UART_Receive(&huart1, response, 4, 1000) == HAL_OK) {
-        // التحقق من مفتاح المصنع (مثال بسيط)
-        if (response[0] == (challenge[0] ^ HADEED_MODEL_ID)) {
-            return true;
-        }
-    }
     return false;
 }
 
-/**
- * @brief استقبال الأوامر من التطبيق (مثلاً: تغيير نمط البحث)
- */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART1) {
-        // هنا يتم استقبال أوامر المستخدم من الموبايل (مثل طلب المعايرة)
-        // سيتم معالجتها في ملف hadeed_state_machine.c
+        /* Command decoding will be added after the command schema is frozen. */
     }
 }

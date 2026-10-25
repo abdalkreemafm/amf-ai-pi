@@ -20,6 +20,9 @@ Current message types:
 
 - `0x01`: synchronization/heartbeat.
 - `0x02`: vision result.
+- `0x10`: target update to the mobile app.
+- `0x20`: voice trigger to the mobile app.
+- `0x30`: 3D field frame to the mobile app.
 
 The maximum payload is 1024 bytes. Receivers must reject unsupported versions,
 invalid lengths, invalid SOF, and CRC failures. The current firmware and K210
