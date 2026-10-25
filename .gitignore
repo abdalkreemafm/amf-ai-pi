@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# C/C++ build outputs
+build/
+out/
+*.o
+*.elf
+*.hex
+*.bin
+*.map
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+build/
+
+# IDE and local tooling
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
