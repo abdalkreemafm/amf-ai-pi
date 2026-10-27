@@ -16,10 +16,12 @@ jobs:
         run: python -m compileall -q AI_Vision_K210 protocol tests tools
       - name: Install test dependency
         run: python -m pip install --disable-pip-version-check pytest
-      - name: Run protocol tests
+      - name: Run Python protocol tests
         run: python -m pytest -q tests/test_protocol.py tests/test_k210_protocol.py
       - name: Run dependency-free smoke test
         run: python tools/validate_protocol.py
+      - name: Check project scaffolding
+        run: python tools/check_project_scaffolding.py
 
   protocol-c:
     runs-on: ubuntu-latest
@@ -31,3 +33,13 @@ jobs:
             protocol/hadeed_protocol.c tests/test_protocol_c.c \
             -o /tmp/test_protocol_c
           /tmp/test_protocol_c
+
+  cmake-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure and build host checks
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build --parallel
+          ctest --test-dir build --output-on-failure

@@ -1,0 +1,14 @@
+# STM32CubeMX project template
+# This file is intentionally a template: the exact MCU, board, clocks, pins,
+# DMA streams, and CubeMX version must be selected from the real hardware.
+# Rename to Hadeed.ioc only after completing hardware/STM32_PROJECT_SETUP.md.
+
+[Hadeed]
+ProjectName=Hadeed
+ProjectType=STM32CubeMX
+ProtocolVersion=1
+RequiredUART=K210_LINK
+RequiredBLEUART=BLE_LINK
+RequiredSPI=ADS1256
+RequiredI2C=RM3100
+RequiredRTOS=CMSIS-RTOS2
