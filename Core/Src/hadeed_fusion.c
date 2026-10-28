@@ -14,6 +14,8 @@
 #include "hadeed_math.h"
 #include "hadeed_logic.h"
 #include "hadeed_config.h"
+#include "hadeed_fusion.h"
+#include <math.h>
 
 /* --- 1. INTERNAL LOGIC FUNCTIONS --- */
 
@@ -55,6 +57,7 @@ static uint8_t Calculate_Confidence(Hadeed_Target_Feature_t *feat) {
  * @return نوع الهدف النهائي المعتمد
  */
 uint8_t Hadeed_Fuse_Sensors_Logic(Hadeed_Target_Feature_t *feat) {
+    if (feat == NULL) return TARGET_ID_NONE;
     
     // 1. فحص "عتبة الاستيقاظ" (Wake-up Threshold)
     if (feat->peak_amplitude < SIG_NOISE_FLOOR_DEFAULT) {
@@ -115,14 +118,16 @@ uint8_t Hadeed_Fuse_Sensors_Logic(Hadeed_Target_Feature_t *feat) {
  * @brief التوفيق بين زمن النبضة ومكان الكويل (Sync Check)
  * يمنع إصدار قرار إذا كان الجهاز يتحرك بسرعة جنونية تشتت البيانات
  */
-bool Hadeed_Is_Decision_Valid(Hadeed_Target_Feature_t *feat) {
+bool Hadeed_Is_Decision_Valid(const Hadeed_Target_Feature_t *feat) {
+    if (feat == NULL || !isfinite(feat->ground_speed) ||
+        !isfinite(feat->tilt_pitch) || !isfinite(feat->tilt_roll)) return false;
     // إذا كانت سرعة الأرجحة أكبر من 1.8 متر/ثانية، البيانات غير موثوقة للتحليل العميق
     if (feat->ground_speed > 1.8f) {
         return false;
     }
     
     // التحقق من استقرار الميلان (Tilt)
-    if (feat->tilt_pitch > 45.0f || feat->tilt_roll > 45.0f) {
+    if (fabsf(feat->tilt_pitch) > 45.0f || fabsf(feat->tilt_roll) > 45.0f) {
         return false;
     }
 

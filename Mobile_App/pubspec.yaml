@@ -1,0 +1,25 @@
+name: hadeed_mobile
+publish_to: 'none'
+description: Hadeed field companion application.
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ar_flutter_plugin: ^0.7.3
+  crypto: ^3.0.3
+  http: ^1.2.0
+  shared_preferences: ^2.2.2
+  soundpool: ^2.4.1
+  vector_math: ^2.1.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/audio/
+    - assets/images/
+    - assets/models/

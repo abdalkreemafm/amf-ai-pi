@@ -1,172 +1,147 @@
-/**
-  ******************************************************************************
-  * @file           : ads1256.c
-  * @brief          : Professional Driver for TI ADS1256 (24-bit ADC)
-  * @author         : Abdul Karim (AMF Tech) & Manus AI
-  * @date           : 2026-06-01
-  ******************************************************************************
-  * @attention
-  * Optimized for STM32H7 @ 480MHz. Uses SPI Mode 1 (CPOL=0, CPHA=1).
-  * Supports high-speed burst sampling for Pulse Induction decay curves.
-  ******************************************************************************
-  */
-
 #include "ads1256.h"
 #include "hadeed_config.h"
 #include "main.h"
 
-/* --- 1. ADS1256 REGISTER COMMANDS --- */
-#define CMD_WAKEUP    0x00
-#define CMD_RDATA     0x01
-#define CMD_RDATAC    0x03
-#define CMD_SDATAC    0x0F
-#define CMD_RREG      0x10
-#define CMD_WREG      0x50
-#define CMD_SELFCAL   0xF0
-#define CMD_SYNC      0xFC
-#define CMD_STANDBY   0xFD
+#define CMD_RDATA 0x01u
+#define CMD_RDATAC 0x03u
+#define CMD_SDATAC 0x0Fu
+#define CMD_WREG 0x50u
+#define CMD_SELFCAL 0xF0u
 
-/* --- 2. INTERNAL HELPERS --- */
+static volatile bool burst_complete;
+static volatile HAL_StatusTypeDef burst_status = HAL_ERROR;
 
-/**
- * @brief التحكم في خط اختيار الشريحة (CS) مع تأخير بسيط لتناسب سرعة H7
- */
-static void ADS1256_CS(bool state) {
-    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
-    // تأخير ميكروي بسيط لأن المعالج أسرع بمراحل من الـ ADC
-    for(volatile int i=0; i<10; i++); 
+static void ADS1256_CS(bool selected) {
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin,
+                      selected ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    for (volatile int i = 0; i < 10; ++i) {}
 }
 
-/**
- * @brief انتظار إشارة الجاهزية (DRDY) من الحساس
- */
-static void ADS1256_WaitDRDY(void) {
-    uint32_t timeout = 100000;
-    while (HAL_GPIO_ReadPin(ADC_DRDY_GPIO_Port, ADC_DRDY_Pin) == GPIO_PIN_SET && timeout--) {
-        // ننتظر حتى يهبط خط DRDY للصفر
-    }
+static HAL_StatusTypeDef ADS1256_WaitDRDY(void) {
+    uint32_t timeout = 100000u;
+    while (HAL_GPIO_ReadPin(ADC_DRDY_GPIO_Port, ADC_DRDY_Pin) == GPIO_PIN_SET && timeout-- > 0u) {}
+    return timeout == 0u ? HAL_TIMEOUT : HAL_OK;
 }
 
-/**
- * @brief إرسال أمر وكتابة قيمة في سجل (Register)
- */
-static void ADS1256_WriteReg(uint8_t reg, uint8_t value) {
+static HAL_StatusTypeDef ADS1256_WriteReg(uint8_t reg, uint8_t value) {
+    uint8_t buf[3] = {(uint8_t)(CMD_WREG | reg), 0u, value};
     ADS1256_CS(true);
-    uint8_t buf[3];
-    buf[0] = CMD_WREG | reg;
-    buf[1] = 0x00; // كتابة سجل واحد
-    buf[2] = value;
-    HAL_SPI_Transmit(&hspi1, buf, 3, 10);
+    HAL_StatusTypeDef status = HAL_SPI_Transmit(&hspi1, buf, sizeof(buf), 10u);
     ADS1256_CS(false);
+    return status;
 }
 
-/* --- 3. MAIN PUBLIC FUNCTIONS --- */
-
-/**
- * @brief تهيئة الحساس وضبط الحساسية القصوى (Gain 64) وسرعة 30kSPS
- */
 void ADS1256_Init(void) {
+    uint8_t cmd = CMD_SDATAC;
     ADS1256_CS(false);
     HAL_GPIO_WritePin(ADC_RST_GPIO_Port, ADC_RST_Pin, GPIO_PIN_RESET);
-    HAL_Delay(10);
+    HAL_Delay(10u);
     HAL_GPIO_WritePin(ADC_RST_GPIO_Port, ADC_RST_Pin, GPIO_PIN_SET);
-    HAL_Delay(50);
+    HAL_Delay(50u);
 
     ADS1256_CS(true);
-    uint8_t cmd = CMD_SDATAC; // إيقاف القراءة المستمرة للبرمجة
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10);
-    
-    // 1. ضبط سجل الحالة (STATUS): تفعيل الـ Buffer لرفع المقاومة المدخلة
-    ADS1256_WriteReg(REG_STATUS, 0x02); 
-    
-    // 2. ضبط المدخلات (MUX): قناة 0 موجبة وقناة 1 سالبة (Differential)
-    ADS1256_WriteReg(REG_MUX, 0x01); 
-    
-    // 3. ضبط التضخيم (ADCON): Gain 64 للحساسية المفرطة
-    ADS1256_WriteReg(REG_ADCON, ADC_DEFAULT_GAIN); 
-    
-    // 4. ضبط سرعة البيانات (DRATE): 30,000 عينة في الثانية
-    ADS1256_WriteReg(REG_DRATE, 0xF0); 
-
-    // 5. إجراء معايرة ذاتية (Self-Calibration)
-    cmd = CMD_SELFCAL;
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10);
-    HAL_Delay(100);
-    
+    (void)HAL_SPI_Transmit(&hspi1, &cmd, 1u, 10u);
     ADS1256_CS(false);
+    (void)ADS1256_WriteReg(REG_STATUS, 0x02u);
+    (void)ADS1256_WriteReg(REG_MUX, 0x01u);
+    (void)ADS1256_WriteReg(REG_ADCON, ADC_DEFAULT_GAIN);
+    (void)ADS1256_WriteReg(REG_DRATE, 0xF0u);
+
+    cmd = CMD_SELFCAL;
+    ADS1256_CS(true);
+    (void)HAL_SPI_Transmit(&hspi1, &cmd, 1u, 10u);
+    ADS1256_CS(false);
+    HAL_Delay(100u);
+    burst_complete = true;
+    burst_status = HAL_OK;
 }
 
-/**
- * @brief قراءة عينة واحدة بـ 24 بت وتحويلها لرقم 32 بت معالج
- */
-int32_t ADS1256_Read_Raw(void) {
-    uint8_t buf[3] = {0};
-    int32_t result = 0;
+int32_t ADS1256_Unpack_24BE(const uint8_t *bytes) {
+    if (bytes == NULL) return 0;
+    int32_t value = (int32_t)(((uint32_t)bytes[0] << 16) |
+                               ((uint32_t)bytes[1] << 8) | bytes[2]);
+    return (value & 0x00800000) ? (value | (int32_t)0xFF000000) : value;
+}
 
-    ADS1256_WaitDRDY();
-    ADS1256_CS(true);
-
+HAL_StatusTypeDef ADS1256_Read_Raw_Status(int32_t *result) {
+    if (result == NULL || ADS1256_WaitDRDY() != HAL_OK) return HAL_TIMEOUT;
     uint8_t cmd = CMD_RDATA;
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10);
-    
-    // تأخير زمن قراءة البيانات (t6) حسب الداتا شيت
-    DWT_Delay_us(7); 
-
-    HAL_SPI_Receive(&hspi1, buf, 3, 10);
-    ADS1256_CS(false);
-
-    // دمج الـ 3 بايت في رقم واحد 24-بت (Signed)
-    result = (int32_t)((buf[0] << 16) | (buf[1] << 8) | buf[2]);
-
-    // معالجة الإشارة (Sign Extension)
-    if (result & 0x800000) {
-        result |= 0xFF000000;
+    uint8_t buf[3] = {0};
+    ADS1256_CS(true);
+    HAL_StatusTypeDef status = HAL_SPI_Transmit(&hspi1, &cmd, 1u, 10u);
+    if (status == HAL_OK) {
+        DWT_Delay_us(7u);
+        status = HAL_SPI_Receive(&hspi1, buf, sizeof(buf), 10u);
     }
+    ADS1256_CS(false);
+    if (status == HAL_OK) *result = ADS1256_Unpack_24BE(buf);
+    return status;
+}
 
+int32_t ADS1256_Read_Raw(void) {
+    int32_t result = 0;
+    (void)ADS1256_Read_Raw_Status(&result);
     return result;
 }
 
-/**
- * @brief القراءة السريعة "دفعات" (Burst Read) باستخدام الـ DMA
- * هذه الدالة هي سر تصوير الـ 3D وتحليل التلاشي
- */
-void ADS1256_Read_Burst_DMA(uint32_t *output_buffer, uint16_t num_samples) {
-    ADS1256_CS(true);
-    
-    // تفعيل وضع القراءة المستمرة (RDATAC)
+HAL_StatusTypeDef ADS1256_Read_Burst_DMA(uint8_t *output_bytes, uint16_t num_samples) {
+    if (output_bytes == NULL || num_samples == 0u || num_samples > (UINT16_MAX / 3u)) return HAL_ERROR;
+    if (!burst_complete && burst_status == HAL_BUSY) return HAL_BUSY;
+
     uint8_t cmd = CMD_RDATAC;
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10);
-    DWT_Delay_us(7);
-
-    // استلام البيانات عبر الـ DMA مباشرة للذاكرة لضمان عدم استهلاك المعالج
-    // يتم استلام 3 بايت لكل عينة
-    HAL_SPI_Receive_DMA(&hspi1, (uint8_t*)output_buffer, num_samples * 3);
-    
-    // المايسترو (main.c) سينتظر انتهاء الـ DMA لمعالجة المصفوفة
+    burst_complete = false;
+    burst_status = HAL_BUSY;
+    ADS1256_CS(true);
+    HAL_StatusTypeDef status = HAL_SPI_Transmit(&hspi1, &cmd, 1u, 10u);
+    if (status == HAL_OK) {
+        DWT_Delay_us(7u);
+        status = HAL_SPI_Receive_DMA(&hspi1, output_bytes, (uint16_t)(num_samples * 3u));
+    }
+    if (status != HAL_OK) {
+        ADS1256_CS(false);
+        burst_status = status;
+    }
+    return status;
 }
 
-/**
- * @brief تغيير الحساسية (Gain) ديناميكياً بناءً على أوامر الـ AI
- */
+bool ADS1256_Burst_Complete(void) { return burst_complete; }
+HAL_StatusTypeDef ADS1256_Burst_Status(void) { return burst_status; }
+
+HAL_StatusTypeDef ADS1256_Abort_Burst(void) {
+    HAL_StatusTypeDef status = HAL_SPI_Abort(&hspi1);
+    ADS1256_CS(false);
+    burst_status = status;
+    burst_complete = true;
+    return status;
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi == &hspi1) {
+        ADS1256_CS(false);
+        burst_status = HAL_OK;
+        burst_complete = true;
+    }
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi == &hspi1) {
+        ADS1256_CS(false);
+        burst_status = HAL_ERROR;
+        burst_complete = true;
+    }
+}
+
 void ADS1256_SetGain(uint8_t gain) {
-    ADS1256_WriteReg(REG_ADCON, gain);
-    // يجب إجراء معايرة سريعة بعد تغيير الـ Gain
-    uint8_t cmd = CMD_SELFCAL;
-    ADS1256_CS(true);
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10);
-    ADS1256_CS(false);
+    (void)ADS1256_WriteReg(REG_ADCON, gain);
 }
 
-/**
- * @brief فحص اتصال الحساس (Health Check)
- */
 HAL_StatusTypeDef ADS1256_Ping(void) {
+    uint8_t cmd = 0x10u;
+    uint8_t id = 0u;
     ADS1256_CS(true);
-    uint8_t cmd = 0x10; // Read ID Register
-    uint8_t id = 0;
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10);
-    HAL_SPI_Receive(&hspi1, &id, 1, 10);
+    HAL_StatusTypeDef status = HAL_SPI_Transmit(&hspi1, &cmd, 1u, 10u);
+    if (status == HAL_OK) status = HAL_SPI_Receive(&hspi1, &id, 1u, 10u);
     ADS1256_CS(false);
-    
-    return (id >> 4 == 0x03) ? HAL_OK : HAL_ERROR;
+    if (status != HAL_OK) return status;
+    return ((id >> 4) == 0x03u) ? HAL_OK : HAL_ERROR;
 }

@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include "hadeed_logic.h"
 
 /* --- CONSTANTS & CONFIGURATION --- */
 #define HADEED_ADC_CHANNELS      4       // لدعم الترقية لـ V3 مستقبلاً
@@ -70,6 +71,7 @@ typedef struct {
  */
 typedef struct {
     float peak_amplitude;     // أقصى قوة للإشارة
+    float noise_std_dev;      // انحراف الضجيج المقاس من مرشح كالمان
     Hadeed_SMF_Data_t smf;    // بيانات الترددات
     Hadeed_Decay_Profile_t dp; // بيانات التلاشي
     
@@ -123,6 +125,7 @@ typedef struct {
     bool sensor_rm3100_ok;
     bool sensor_imu_ok;
     bool k210_link_ok;
+    Hadeed_System_State_t current_state;
     float mcu_temperature;    // لمراقبة الانحراف الحراري للمكبرات
     uint32_t uptime_seconds;
     uint8_t security_status;  // 0: مشفر، 1: غير مصدق، 2: تم الاختراق

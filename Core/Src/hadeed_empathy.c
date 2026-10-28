@@ -13,6 +13,7 @@
 
 #include "hadeed_empathy.h"
 #include "hadeed_logic.h"
+#include "hadeed_comm.h"
 #include "hadeed_config.h"
 #include "main.h"
 

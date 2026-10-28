@@ -100,11 +100,15 @@ float Hadeed_WienBridge_Measure_Phase(void) {
     uint32_t t_ref = 0, t_soil = 0;
     
     // انتظار إشارة المرجع (1kHz PWM) لتصل للصفر
-    while(HAL_GPIO_ReadPin(WIEN_REF_GPIO_Port, WIEN_REF_Pin) == GPIO_PIN_RESET);
+    uint32_t timeout = 1000000u;
+    while (HAL_GPIO_ReadPin(WIEN_REF_GPIO_Port, WIEN_REF_Pin) == GPIO_PIN_RESET && timeout-- > 0u) {}
+    if (timeout == 0u) return 0.0f;
     t_ref = DWT->CYCCNT;
     
     // انتظار إشارة التربة لتصل لذروتها (أو عبور الصفر)
-    while(Hadeed_WienBridge_Read_Raw_V() < (bridge_offset_v + 0.1f));
+    timeout = 1000000u;
+    while (Hadeed_WienBridge_Read_Raw_V() < (bridge_offset_v + 0.1f) && timeout-- > 0u) {}
+    if (timeout == 0u) return 0.0f;
     t_soil = DWT->CYCCNT;
 
     float diff_us = (float)(t_soil - t_ref) / (SystemCoreClock / 1000000.0f);

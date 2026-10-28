@@ -18,6 +18,12 @@
 #include "hadeed_logic.h"
 #include "hadeed_config.h"
 #include "hadeed_sync.h"
+#include "hadeed_dsp.h"
+#include "hadeed_fusion.h"
+#include "hadeed_comm.h"
+#include "ads1256.h"
+#include "rm3100.h"
+#include "k210_link.h"
 
 /* --- 2. GLOBAL HANDLES & OBJECTS --- */
 // مقابض المهام (Task Handles)
@@ -35,6 +41,7 @@ Hadeed_Target_Feature_t g_current_target;
 Hadeed_System_Health_t  g_sys_health;
 Hadeed_Kalman_t         g_pi_kalman;
 Hadeed_Sync_Manager_t   g_sync_manager;
+static int32_t g_raw_samples[HADEED_SAMPLES_PER_PULSE];
 
 /* --- 3. PRIVATE FUNCTION PROTOTYPES --- */
 void SystemClock_Config(void);
@@ -65,6 +72,8 @@ int main(void) {
     MX_USART1_UART_Init();  // BLE & K210
 
     /* تهيئة هياكل حديد الرياضية */
+    ADS1256_Init();
+    RM3100_Init();
     Hadeed_DSP_Init(&g_pi_kalman);
     Hadeed_Sync_Init(&g_sync_manager);
     g_sys_health.current_state = STATE_BOOTING;
@@ -113,7 +122,8 @@ int main(void) {
  * تقوم بإطلاق النبضة وقراءة الـ 24-bit ADC في زمن حقيقي.
  */
 void StartPulseTask(void *argument) {
-    uint32_t raw_buffer[HADEED_SAMPLES_PER_PULSE];
+    uint8_t raw_bytes[HADEED_SAMPLES_PER_PULSE * 3u];
+    (void)argument;
     for(;;) {
         // أ. إطلاق نبضة البث (TX ON)
         HAL_GPIO_WritePin(TX_GATE_GPIO_Port, TX_GATE_Pin, GPIO_PIN_SET);
@@ -127,12 +137,24 @@ void StartPulseTask(void *argument) {
 
         // ج. انتظار استقرار التربة وقراءة الـ ADC
         DWT_Delay_us(PI_START_SAMPLING_DELAY_US);
-        ADS1256_Read_Burst_DMA(raw_buffer, HADEED_SAMPLES_PER_PULSE);
+        if (ADS1256_Read_Burst_DMA(raw_bytes, HADEED_SAMPLES_PER_PULSE) != HAL_OK) continue;
+        uint32_t wait_start = HAL_GetTick();
+        while (!ADS1256_Burst_Complete() && (HAL_GetTick() - wait_start) < 100u) {
+            osDelay(1u);
+        }
+        if (!ADS1256_Burst_Complete()) {
+            (void)ADS1256_Abort_Burst();
+            continue;
+        }
+        if (ADS1256_Burst_Status() != HAL_OK) continue;
 
         // د. تنقية الإشارة وحفظ النتائج الأولية
         osMutexAcquire(DataMutexHandle, osWaitForever);
-        g_current_target.peak_amplitude = Hadeed_Adaptive_Kalman(&g_pi_kalman, (float)raw_buffer[5]);
-        // حساب التلاشي (سيتم كتابة الكود في hadeed_decay.c)
+        for (uint16_t i = 0; i < HADEED_SAMPLES_PER_PULSE; ++i) {
+            g_raw_samples[i] = ADS1256_Unpack_24BE(&raw_bytes[i * 3u]);
+        }
+        g_current_target.peak_amplitude = Hadeed_Adaptive_Kalman(&g_pi_kalman, (float)g_raw_samples[5]);
+        g_current_target.noise_std_dev = g_pi_kalman.current_std_dev;
         osMutexRelease(DataMutexHandle);
 
         // هـ. تنبيه "العقل" لبدء التحليل العميق
@@ -157,14 +179,11 @@ void StartBrainTask(void *argument) {
         g_current_target.mag_total_field = RM3100_Get_Total_Field();
         
         // 2. تحليل (SMF) والانسجام الترددي
-        Hadeed_Analyze_SMF(&g_current_target);
+        Hadeed_Analyze_SMF(&g_current_target, g_raw_samples, HADEED_SAMPLES_PER_PULSE);
+        Hadeed_Calculate_Decay_Profile(&g_current_target, g_raw_samples, HADEED_SAMPLES_PER_PULSE);
 
         // 3. اتخاذ القرار النهائي (Fusion Decision)
-        g_current_target.target_type = Hadeed_Fuse_Sensors(
-            g_current_target.peak_amplitude, 
-            g_current_target.mag_total_field, 
-            g_current_target.visual_class_id
-        );
+        g_current_target.target_type = Hadeed_Fuse_Sensors_Logic(&g_current_target);
 
         osMutexRelease(DataMutexHandle);
 
@@ -204,11 +223,11 @@ void StartCommTask(void *argument) {
         osThreadFlagsWait(0x02, osFlagsWaitAny, osWaitForever);
 
         // إرسال باكت البلوتوث المشفر
-        BLE_Send_Target_Update(&g_current_target);
+        Hadeed_Comm_Send_Target_Update(&g_current_target);
 
         // إذا كان الهدف ثميناً، أرسل أمر "افتح الـ 3D"
         if (g_current_target.confidence_score > CONFIDENCE_LEVEL_HIGH) {
-            BLE_Send_Voice_Command(VOICE_CMD_GOLD_HIGH);
+            Hadeed_Comm_Send_Voice_Trigger(VOICE_CMD_GOLD_HIGH);
         }
 
         osDelay(BLE_UPDATE_RATE_MS);
@@ -225,8 +244,8 @@ void StartMonitorTask(void *argument) {
         g_sys_health.mcu_temperature = Internal_Temp_Sensor_Read();
         
         // 2. فحص سلامة الحساسات
-        g_sys_health.sensor_ads1256_ok = (ADS1256_Check() == HAL_OK);
-        g_sys_health.sensor_rm3100_ok  = (RM3100_Check() == HAL_OK);
+        g_sys_health.sensor_ads1256_ok = (ADS1256_Ping() == HAL_OK);
+        g_sys_health.sensor_rm3100_ok  = (RM3100_Ping() == HAL_OK);
 
         // 3. التعافي الذاتي إذا لزم الأمر
         if (!g_sys_health.sensor_ads1256_ok || !g_sys_health.sensor_rm3100_ok) {
@@ -236,7 +255,7 @@ void StartMonitorTask(void *argument) {
         // 4. مراقبة البطارية
         float vbatt = FuelGauge_GetVoltage();
         if (vbatt < BATT_LOW_THRESHOLD_VOLTS) {
-            BLE_Send_Voice_Command(VOICE_CMD_BATT_LOW);
+            Hadeed_Comm_Send_Voice_Trigger(VOICE_CMD_BATT_LOW);
         }
 
         osDelay(1000); // مراقبة كل ثانية
