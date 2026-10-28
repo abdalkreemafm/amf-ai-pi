@@ -21,6 +21,7 @@
  * @brief تهيئة محرك المعالجة وقيم كالمان الأولية
  */
 void Hadeed_DSP_Init(Hadeed_Kalman_t *kf) {
+    if (kf == NULL) return;
     kf->q = 0.015f;           // ضجيج العملية (سرعة استجابة الجهاز)
     kf->r = SIG_NOISE_FLOOR_DEFAULT; // ضجيج القياس الأولي
     kf->p = 1.0f;
@@ -42,6 +43,7 @@ void Hadeed_DSP_Init(Hadeed_Kalman_t *kf) {
  * @return القراءة المنقاة
  */
 float Hadeed_Adaptive_Kalman(Hadeed_Kalman_t *kf, float measurement) {
+    if (kf == NULL) return measurement;
     // أ. تحديث مخزن الضجيج لحساب الانحراف المعياري (Standard Deviation)
     kf->noise_floor_buffer[kf->buffer_idx] = measurement;
     kf->buffer_idx = (kf->buffer_idx + 1) % HADEED_KALMAN_HISTORY;
@@ -91,7 +93,8 @@ float Hadeed_Compensate_Thermal_Drift(float raw_signal, float mcu_temp) {
 /**
  * @brief تحليل استجابة الترددات المتعددة وحساب الانسجام
  */
-void Hadeed_Analyze_SMF(Hadeed_Target_Feature_t *target, uint32_t *raw_buffer) {
+void Hadeed_Analyze_SMF(Hadeed_Target_Feature_t *target, const int32_t *raw_buffer, uint16_t sample_count) {
+    if (target == NULL || raw_buffer == NULL || sample_count <= SMF_WINDOW_LOW_END) return;
     float low_sum = 0, mid_sum = 0, high_sum = 0;
 
     // 1. حساب طاقة التردد العالي (العينات المبكرة - للشذر والصخور)
@@ -126,7 +129,8 @@ void Hadeed_Analyze_SMF(Hadeed_Target_Feature_t *target, uint32_t *raw_buffer) {
 /**
  * @brief حساب الانحراف اللوغاريتمي لتمييز هوية المعدن
  */
-void Hadeed_Calculate_Decay_Profile(Hadeed_Target_Feature_t *target, uint32_t *raw_buffer) {
+void Hadeed_Calculate_Decay_Profile(Hadeed_Target_Feature_t *target, const int32_t *raw_buffer, uint16_t sample_count) {
+    if (target == NULL || raw_buffer == NULL || sample_count <= SMF_WINDOW_MID_END) return;
     // نأخذ نقطتين بعيدتين في منحنى التلاشي
     float start = (float)raw_buffer[SMF_WINDOW_HIGH_START + 2]; 
     float end   = (float)raw_buffer[SMF_WINDOW_MID_END];
@@ -140,5 +144,5 @@ void Hadeed_Calculate_Decay_Profile(Hadeed_Target_Feature_t *target, uint32_t *r
 
     // حساب ثبات الإشارة (Stability Index)
     // كلما اقتربت القيمة من 1.0 كان الهدف كتلة صلبة (تكنيزي)
-    target->dp.stability_index = 1.0f - (target->current_std_dev / (target->peak_amplitude + 1.0f));
+    target->dp.stability_index = 1.0f - (target->noise_std_dev / (fabsf(target->peak_amplitude) + 1.0f));
 }

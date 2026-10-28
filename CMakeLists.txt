@@ -4,7 +4,7 @@ project(hadeed_host_checks C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_library(hadeed_protocol STATIC protocol/hadeed_protocol.c)
+add_library(hadeed_protocol STATIC protocol/hadeed_protocol.c protocol/hadeed_framer.c)
 target_include_directories(hadeed_protocol PUBLIC protocol)
 target_compile_options(hadeed_protocol PRIVATE -Wall -Wextra -Werror -pedantic)
 

@@ -30,7 +30,7 @@ jobs:
       - name: Compile and run C protocol test with strict warnings
         run: |
           cc -std=c11 -Wall -Wextra -Werror -pedantic -Iprotocol \
-            protocol/hadeed_protocol.c tests/test_protocol_c.c \
+            protocol/hadeed_protocol.c protocol/hadeed_framer.c tests/test_protocol_c.c \
             -o /tmp/test_protocol_c
           /tmp/test_protocol_c
 

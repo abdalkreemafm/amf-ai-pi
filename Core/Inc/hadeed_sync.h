@@ -43,7 +43,6 @@ typedef struct {
 void Hadeed_Sync_Init(Hadeed_Sync_Manager_t *sm);
 void Hadeed_Sync_PreparePacket(Hadeed_Sync_Packet_t *packet);
 size_t Hadeed_Sync_EncodeFrame(const Hadeed_Sync_Packet_t *packet, uint8_t *output, size_t capacity);
-bool Hadeed_Sync_DecodeVisionFrame(const uint8_t *input, size_t input_length, Hadeed_K210_Response_t *response);
 void Hadeed_Sync_ProcessResponse(Hadeed_Sync_Manager_t *sm, const Hadeed_K210_Response_t *response);
 bool Hadeed_Sync_IsLocked(const Hadeed_Sync_Manager_t *sm);
 

@@ -1,4 +1,5 @@
 #include "hadeed_math.h"
+#include "hadeed_comm.h"
 #include "hadeed_logic.h"
 #include "hadeed_config.h"
 #include "hadeed_protocol.h"
@@ -28,7 +29,7 @@ static bool send_frame(uint8_t message_type, const uint8_t *payload, uint16_t pa
     return HAL_UART_Transmit_DMA(&huart1, tx_buffer, (uint16_t)length) == HAL_OK;
 }
 
-void Hadeed_Comm_Send_Target_Update(Hadeed_Target_Feature_t *target) {
+void Hadeed_Comm_Send_Target_Update(const Hadeed_Target_Feature_t *target) {
     if (target == NULL) return;
     uint8_t payload[9] = {0};
     put_i16_be(&payload[0], (int16_t)target->peak_amplitude);

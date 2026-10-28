@@ -31,19 +31,6 @@ size_t Hadeed_Sync_EncodeFrame(const Hadeed_Sync_Packet_t *packet, uint8_t *outp
     return length;
 }
 
-bool Hadeed_Sync_DecodeVisionFrame(const uint8_t *input, size_t input_length, Hadeed_K210_Response_t *response) {
-    if (response == NULL) return false;
-    Hadeed_Protocol_Frame_t frame;
-    const uint8_t *payload = NULL;
-    if (Hadeed_Protocol_Decode(input, input_length, &frame, &payload) != HADEED_PROTOCOL_OK ||
-        frame.message_type != HADEED_PROTOCOL_MSG_VISION_RESULT || frame.payload_length != 4u) return false;
-    response->slave_timestamp = frame.timestamp_ms;
-    response->detected_class = payload[0];
-    response->confidence = payload[1];
-    response->inference_time_ms = (uint16_t)(((uint16_t)payload[2] << 8) | payload[3]);
-    return true;
-}
-
 void Hadeed_Sync_ProcessResponse(Hadeed_Sync_Manager_t *sm, const Hadeed_K210_Response_t *response) {
     if (sm == NULL || response == NULL) return;
     sm->last_sync_time = HAL_GetTick();

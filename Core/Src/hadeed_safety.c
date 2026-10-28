@@ -15,6 +15,8 @@
 #include "hadeed_logic.h"
 #include "hadeed_config.h"
 #include "main.h"
+#include "ads1256.h"
+#include "rm3100.h"
 
 /* --- 1. PRIVATE VARIABLES --- */
 static uint8_t ads_retry_count = 0;
